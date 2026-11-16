@@ -73,6 +73,7 @@ public class KeyboardService extends InputMethodService {
     // ───────────────────────── жизненный цикл ─────────────────────────
     @Override public void onCreate() {
         super.onCreate();
+        instance = this;
         prefs = getSharedPreferences("kb", MODE_PRIVATE);
         lang = Langs.byCode(prefs.getString("lang", "en"));
     }
@@ -104,6 +105,7 @@ public class KeyboardService extends InputMethodService {
 
     @Override public void onDestroy() {
         stopVoice();
+        if (instance == this) instance = null;
         pool.shutdownNow();
         super.onDestroy();
     }
@@ -150,6 +152,7 @@ public class KeyboardService extends InputMethodService {
     }
 
     void showPanel(View v) {
+        if (v != voiceView && (listening || voiceMode)) stopVoice();
         content.removeAllViews();
         content.addView(v, new FrameLayout.LayoutParams(MATCH, MATCH));
     }
@@ -337,6 +340,7 @@ public class KeyboardService extends InputMethodService {
     void setLang(Langs.Lang l) {
         lang = l;
         prefs.edit().putString("lang", l.code).apply();
+        if (voiceLang != null) voiceLang.setText("🎙 " + l.name + " (" + l.code + ")");
         symbols = false;
         shift = caps = false;
         buildKeys();
@@ -402,57 +406,163 @@ public class KeyboardService extends InputMethodService {
     void toast(String s) { Toast.makeText(this, s, Toast.LENGTH_SHORT).show(); }
 
     // ───────────────────────── голосовой ввод ─────────────────────────
-    void toggleVoice() { if (listening) stopVoice(); else startVoice(); }
+    static KeyboardService instance;
+    View voiceView;
+    TextView voiceStatus, voiceBig, voiceLang;
+    boolean voiceMode;
+
+    View voicePanel() {
+        if (voiceView == null) {
+            LinearLayout p = new LinearLayout(this);
+            p.setOrientation(LinearLayout.VERTICAL);
+            p.setGravity(Gravity.CENTER);
+            voiceLang = new TextView(this);
+            voiceLang.setTextColor(0xFFB8B8C8);
+            voiceLang.setTextSize(14);
+            voiceLang.setGravity(Gravity.CENTER);
+            p.addView(voiceLang);
+            voiceStatus = new TextView(this);
+            voiceStatus.setTextColor(TXT);
+            voiceStatus.setTextSize(16);
+            voiceStatus.setGravity(Gravity.CENTER);
+            voiceStatus.setPadding(dp(16), dp(10), dp(16), dp(10));
+            voiceStatus.setMaxLines(4);
+            p.addView(voiceStatus);
+            voiceBig = new TextView(this);
+            voiceBig.setText("🎤");
+            voiceBig.setTextSize(40);
+            voiceBig.setGravity(Gravity.CENTER);
+            voiceBig.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) { haptic(v); if (listening) stopVoice(); else startVoice(); }
+            });
+            p.addView(voiceBig, new LinearLayout.LayoutParams(dp(110), dp(110)));
+            TextView hint = new TextView(this);
+            hint.setText("Нажмите на микрофон, чтобы начать или закончить диктовку.\nЯзык — как у клавиатуры (🌐).");
+            hint.setTextColor(0xFF77778A);
+            hint.setTextSize(12);
+            hint.setGravity(Gravity.CENTER);
+            hint.setPadding(dp(16), dp(10), dp(16), 0);
+            p.addView(hint);
+            voiceView = p;
+        }
+        voiceLang.setText("🎙 " + lang.name + " (" + lang.code + ")");
+        setListening(listening);
+        return voiceView;
+    }
+
+    void say(String s) { if (voiceStatus != null) voiceStatus.setText(s); }
+
+    void toggleVoice() {
+        showPanel(voicePanel());
+        if (listening) stopVoice(); else startVoice();
+    }
+
+    boolean hasMic() { return checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED; }
+
+    void launchVoiceActivity(String mode) {
+        Intent i = new Intent(this, VoiceActivity.class);
+        i.putExtra("mode", mode);
+        i.putExtra("lang", Langs.speechTag(lang));
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        startActivity(i);
+    }
+
+    /** Текст, пришедший из системного диалога распознавания (запасной путь). */
+    void onVoiceText(String text) {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic != null && text != null && text.length() > 0) ic.commitText(text + " ", 1);
+    }
 
     void startVoice() {
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            toast("Нужно разрешение на микрофон");
-            Intent i = new Intent(this, MainActivity.class);
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(i);
+        if (!hasMic()) {
+            say("Нужно разрешение на микрофон — разрешите в открывшемся окне");
+            launchVoiceActivity("permission");
             return;
         }
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) { toast("На устройстве нет службы распознавания речи (приложение Google)"); return; }
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            say("Встроенного распознавания нет — открываю системный диалог");
+            launchVoiceActivity("dialog");
+            return;
+        }
+        voiceMode = true;
+        if (recognizer != null) { try { recognizer.destroy(); } catch (Exception ignored) {} }
         recognizer = SpeechRecognizer.createSpeechRecognizer(this);
         recognizer.setRecognitionListener(new RecognitionListener() {
-            @Override public void onReadyForSpeech(Bundle b) { setListening(true); }
-            @Override public void onBeginningOfSpeech() {}
-            @Override public void onRmsChanged(float v) {}
+            @Override public void onReadyForSpeech(Bundle b) { setListening(true); say("Говорите…"); }
+            @Override public void onBeginningOfSpeech() { say("Слушаю…"); }
+            @Override public void onRmsChanged(float rms) {
+                if (voiceBig != null) { float s = 1f + Math.max(0, Math.min(rms, 10)) / 25f; voiceBig.setScaleX(s); voiceBig.setScaleY(s); }
+            }
             @Override public void onBufferReceived(byte[] b) {}
-            @Override public void onEndOfSpeech() {}
-            @Override public void onError(int e) { setListening(false); if (e != SpeechRecognizer.ERROR_NO_MATCH && e != SpeechRecognizer.ERROR_SPEECH_TIMEOUT) toast("Голосовой ввод: ошибка " + e); }
+            @Override public void onEndOfSpeech() { say("Обрабатываю…"); }
+            @Override public void onError(int e) {
+                setListening(false);
+                if (e == SpeechRecognizer.ERROR_NO_MATCH || e == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
+                    say("Не расслышал. Нажмите на микрофон и повторите.");
+                } else if (e == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) {
+                    say("Нет разрешения на микрофон");
+                    launchVoiceActivity("permission");
+                } else if (e == SpeechRecognizer.ERROR_NETWORK || e == SpeechRecognizer.ERROR_NETWORK_TIMEOUT) {
+                    say("Нет сети для распознавания. Проверьте интернет.");
+                } else if (e == SpeechRecognizer.ERROR_RECOGNIZER_BUSY || e == SpeechRecognizer.ERROR_CLIENT) {
+                    say("Служба занята. Нажмите на микрофон ещё раз.");
+                    stopVoice();
+                } else {
+                    say("Ошибка распознавания (" + e + ")");
+                }
+            }
             @Override public void onResults(Bundle b) {
                 ArrayList<String> r = b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 InputConnection ic = getCurrentInputConnection();
-                if (ic != null && r != null && !r.isEmpty()) ic.commitText(r.get(0) + " ", 1);
+                if (ic != null && r != null && !r.isEmpty()) {
+                    ic.commitText(r.get(0) + " ", 1);
+                    say("✓ " + r.get(0));
+                }
                 setListening(false);
+                if (voiceMode) ui.postDelayed(new Runnable() { @Override public void run() { if (voiceMode && !listening) startVoice(); } }, 200);
             }
             @Override public void onPartialResults(Bundle b) {
                 ArrayList<String> r = b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 InputConnection ic = getCurrentInputConnection();
-                if (ic != null && r != null && !r.isEmpty()) ic.setComposingText(r.get(0), 1);
+                if (ic != null && r != null && !r.isEmpty()) { ic.setComposingText(r.get(0), 1); say(r.get(0)); }
             }
             @Override public void onEvent(int t, Bundle b) {}
         });
         Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Langs.speechTag(lang));
+        i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, Langs.speechTag(lang));
         i.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-        recognizer.startListening(i);
-        setListening(true);
+        i.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        i.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
+        try {
+            recognizer.startListening(i);
+            setListening(true);
+            say("Запускаю микрофон…");
+        } catch (Exception ex) {
+            say("Не удалось запустить: " + ex.getMessage());
+            setListening(false);
+        }
     }
 
     void stopVoice() {
+        voiceMode = false;
         if (recognizer != null) {
             try { recognizer.stopListening(); recognizer.destroy(); } catch (Exception ignored) {}
             recognizer = null;
         }
+        InputConnection ic = getCurrentInputConnection();
+        if (ic != null) ic.finishComposingText();
         setListening(false);
     }
 
     void setListening(boolean on) {
         listening = on;
         if (micBtn != null) micBtn.setBackground(bg(on ? RED : 0xFF1D1D27));
+        if (voiceBig != null) {
+            voiceBig.setBackground(rect(on ? RED : ACCENT));
+            if (!on) { voiceBig.setScaleX(1f); voiceBig.setScaleY(1f); }
+        }
     }
 
     // ───────────────────────── эмодзи ─────────────────────────
