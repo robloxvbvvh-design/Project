@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Садик Абсурд</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:"Segoe UI",Arial,sans-serif;color:#fff}
+canvas{display:block}
+#hud{position:fixed;inset:0;pointer-events:none;display:none}
+.bars{position:absolute;left:16px;top:16px;width:230px;background:rgba(0,0,0,.45);padding:10px;border-radius:8px}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}
+.row span{width:70px}
+.bar{flex:1;height:10px;background:rgba(255,255,255,.2);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;width:100%}
+#bHp{background:#e53935}#bBld{background:#43a047}#bAng{background:#fb8c00}
+#clock{font-size:20px;font-weight:700;margin-top:4px}
+#goal{font-size:12px;opacity:.85;margin-top:4px;line-height:1.3}
+#banner{position:absolute;top:14%;left:0;right:0;text-align:center;font-size:clamp(28px,6vw,64px);font-weight:900;letter-spacing:2px;text-shadow:0 0 12px #000,0 3px 0 #b00;opacity:0;transition:opacity .3s}
+#msg{position:absolute;bottom:20%;left:0;right:0;text-align:center;font-size:clamp(15px,2.4vw,22px);text-shadow:0 2px 4px #000;padding:0 20px}
+#prompt{position:absolute;bottom:12%;left:0;right:0;text-align:center;font-size:clamp(15px,2.2vw,20px);color:#ffe082;text-shadow:0 2px 4px #000}
+#cross{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:rgba(255,255,255,.85)}
+#hit{position:absolute;inset:0;background:radial-gradient(transparent 40%,rgba(255,0,0,.75));opacity:0}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#help{position:absolute;right:16px;bottom:16px;font-size:12px;opacity:.7;text-align:right;line-height:1.5}
+.screen{position:fixed;inset:0;background:rgba(10,10,25,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:5}
+.screen h1{font-size:clamp(30px,6vw,60px);margin-bottom:12px}
+.screen h2{font-size:clamp(24px,4.5vw,44px);margin-bottom:14px}
+.screen p{max-width:640px;font-size:clamp(14px,2vw,19px);line-height:1.5;margin-bottom:12px;opacity:.92}
+.screen button{margin-top:14px;padding:14px 38px;font-size:20px;font-weight:700;border:0;border-radius:10px;background:#ffb300;color:#222;cursor:pointer}
+.screen small{opacity:.65;margin-top:10px;line-height:1.6}
+#end{display:none}
+</style>
+</head>
+<body>
+<div id="hud">
+  <div class="bars">
+    <div class="row"><span>Здоровье</span><div class="bar"><i id="bHp"></i></div></div>
+    <div class="row"><span>Садик</span><div class="bar"><i id="bBld"></i></div></div>
+    <div class="row"><span>Злость</span><div class="bar"><i id="bAng"></i></div></div>
+    <div id="clock"></div>
+    <div id="goal"></div>
+  </div>
+  <div id="banner"></div>
+  <div id="msg"></div>
+  <div id="prompt"></div>
+  <div id="cross"></div>
+  <div id="hit"></div>
+  <div id="flash"></div>
+  <div id="help">WASD ходьба, Shift бег, Пробел прыжок<br>E действие / успокоить ребёнка<br>Q позвать детей за собой, F показать автомат</div>
+</div>
+
+<div id="menu" class="screen">
+  <h1>САДИК АБСУРД</h1>
+  <p>Вы устроились на работу в детский сад. Босс сказал: «Это детский сад для людей. Десять воспитателей уже слились и уничтожились». Дети кидают всё подряд, взрывают, стреляют лазерами из глаз, летают, устраивают землетрясения и цунами. Смена длится три минуты.</p>
+  <p>Всего пять концовок. Найдёте все?</p>
+  <button id="startBtn">Начать смену</button>
+  <small id="found"></small>
+  <small>WASD ходьба, мышь обзор (кликните по экрану для захвата мыши), Shift бег, Пробел прыжок, E действие, Q позвать детей, F показать автомат.<br>Если мышь не захватывается, смотрите стрелками клавиатуры или зажатой кнопкой мыши.</small>
+</div>
+
+<div id="end" class="screen">
+  <h2 id="endTitle"></h2>
+  <p id="endText"></p>
+  <small id="endFound"></small>
+  <button onclick="location.reload()">Играть снова</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const R=Math.random, rr=(a,b)=>a+R()*(b-a), $=id=>document.getElementById(id);
+
+/* ---------- концовки ---------- */
+const ENDINGS={
+ 1:{t:"Хорошая концовка: Заслуженная отставка",x:()=>"Смена окончена. Вы пришли к боссу, уволились и получили зарплату: "+Math.round(20000+G.bld*800)+" монет"+(G.bld<30?" (за разрушения вычли почти всё)":"")+". Вы вышли за дверь и больше никогда не возвращались в садик. Пенсия началась в тот же вечер."},
+ 2:{t:"Плохая концовка: Уничтожены",x:()=>"Дети оказались сильнее. Вас уничтожили так же, как и предыдущих десятерых. Босс повесил объявление: «Требуется воспитатель. Одиннадцатый»."},
+ 3:{t:"Концовка: Тишина",x:()=>"Босс сказал «Держите» и вручил вам автомат. Вы показали его детям. Все замолчали. Садик впервые за много лет стал тихим местом. Вы получили должность старшего воспитателя и очень странную репутацию."},
+ 4:{t:"Секретная концовка: Красная кнопка",x:()=>"Вы так разозлились, что нашли в кладовке ядерную бомбу и взорвали её. Садик, дети, босс и половина города превратились в яркую вспышку. Зато стало тихо."},
+ 5:{t:"Концовка: Подвал",x:()=>"Вы позвали детей за собой, увели их в подвал и заперли дверь. Наверху наконец наступила тишина. Вы тихо ушли домой, не оглядываясь. Из подвала что-то стучит, но это уже не ваша смена."}
+};
+function getFound(){try{return JSON.parse(localStorage.getItem("kg_end")||"[]")}catch(e){return[]}}
+function saveFound(n){try{const f=getFound();if(!f.includes(n)){f.push(n);localStorage.setItem("kg_end",JSON.stringify(f))}return getFound()}catch(e){return[n]}}
+$("found").textContent="Найдено концовок: "+getFound().length+" из 5";
+
+/* ---------- сцена ---------- */
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x9fd3ff);
+scene.fog=new THREE.Fog(0x9fd3ff,25,80);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,200);
+camera.rotation.order="YXZ";
+scene.add(camera);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+document.body.insertBefore(renderer.domElement,document.body.firstChild);
+addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+
+const amb=new THREE.AmbientLight(0xffffff,0.75);scene.add(amb);
+const sun=new THREE.DirectionalLight(0xffffff,0.5);sun.position.set(10,20,5);scene.add(sun);
+
+const colliders=[],mats={};
+const mat=c=>mats[c]||(mats[c]=new THREE.MeshLambertMaterial({color:c}));
+function addBox(x1,x2,y1,y2,z1,z2,color,collide=true){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(x2-x1,y2-y1,z2-z1),mat(color));
+  m.position.set((x1+x2)/2,(y1+y2)/2,(z1+z2)/2);scene.add(m);
+  if(collide)colliders.push({x1,x2,z1,z2});
+  return m;
+}
+function groundHeight(x,z){
+  if(x>=12&&x<=18&&z>=6&&z<=20)return -(z-6)*6/14;
+  if(z>20&&x>=4)return -6;
+  return 0;
+}
+
+/* уровень */
+addBox(-20,20,-0.3,0,-20,6,0xd9b382,false);
+addBox(-20,12,-0.3,0,6,20,0xd9b382,false);
+addBox(18,20,-0.3,0,6,20,0xd9b382,false);
+addBox(4,20,-6.3,-6,20,36,0x777777,false);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(600,600),mat(0x5da84a));ground.rotation.x=-Math.PI/2;ground.position.y=-6.1;scene.add(ground);
+const ceiling=addBox(-20,20,5,5.3,-20,20,0xf5f0e6,false);
+addBox(4,20,-1,-0.7,20,36,0x555555,false);
+// внешние стены
+addBox(-20,20,0,5,-20.3,-20,0xfff1b8);
+addBox(-20,12,0,5,20,20.3,0xfff1b8);
+addBox(18,20,0,5,20,20.3,0xfff1b8);
+addBox(-20.3,-20,0,5,-20,20,0xfff1b8);
+addBox(20,20.3,-6,5,-20,36,0xfff1b8);
+// подвал
+addBox(3.7,4,-6,-1,20,36,0x555555);
+addBox(4,20,-6,-1,36,36.3,0x555555);
+addBox(4,12,-6,-1,20,20.3,0x555555);
+addBox(18,20,-6,-1,20,20.3,0x555555);
+addBox(11.7,12,-6,0,6,20,0x666666);
+addBox(18,18.3,-6,0,6,20,0x666666);
+const ramp=new THREE.Mesh(new THREE.BoxGeometry(6,0.3,15.23),mat(0x9a7b4f));
+ramp.position.set(15,-3.1,13);ramp.rotation.x=0.405;scene.add(ramp);
+// кабинет босса
+addBox(-12.3,-12,0,5,-20,-16,0xf3a6c8);
+addBox(-12.3,-12,0,5,-14,-12,0xf3a6c8);
+addBox(-20,-12,0,5,-12.3,-12,0xf3a6c8);
+addBox(-19,-15,0,1,-14.5,-13.5,0x6d4c41);
+// кладовка с бомбой
+addBox(14.7,15,0,5,-20,-17,0x444444);
+addBox(15,19,0,5,-17,-16.7,0x444444);
+const closetLight=new THREE.PointLight(0xffcc66,0.8,8);closetLight.position.set(17.5,3,-18.5);scene.add(closetLight);
+const bomb=new THREE.Group();
+const bb=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,1.4,16),mat(0x666666));bb.position.y=0.7;bomb.add(bb);
+const bg=new THREE.Mesh(new THREE.SphereGeometry(0.28,12,12),new THREE.MeshBasicMaterial({color:0x66ff66}));bg.position.y=1.5;bomb.add(bg);
+bomb.position.set(17.5,0,-18.5);scene.add(bomb);
+// рычаг подвала
+const lever=addBox(18.7,19.3,-6,-4.8,33.7,34.3,0xb71c1c,true);
+// декор
+function okPos(x,z){return !(x>10.5&&z>4)&&!(x<-11&&z<-11)&&!(x>13&&z<-14)}
+const cols=[0xff5252,0x448aff,0xffeb3b,0x69f0ae,0xba68c8,0xff9800];
+for(let i=0;i<8;i++){let x,z;do{x=rr(-17,9);z=rr(-9,17)}while(!okPos(x,z));
+  addBox(x-.8,x+.8,0,0.7,z-.5,z+.5,cols[i%6]);
+}
+for(let i=0;i<26;i++){let x,z;do{x=rr(-18,19);z=rr(-18,18)}while(!okPos(x,z));
+  const s=rr(.2,.45);addBox(x,x+s,0,s,z,z+s,cols[i%6],false);
+}
+for(let i=0;i<5;i++){let x=-16+i*8;addBox(x-1.2,x+1.2,1.6,3.2,-20,-19.9,cols[i%6],false)}
+for(let i=0;i<3;i++){addBox(-6+i*8-3,-6+i*8+3,0,0.03,-3,3,cols[(i+2)%6],false)}
+
+/* люди */
+function box(w,h,d,c,x,y,z,parent){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);parent.add(m);return m}
+const boss=new THREE.Group();
+box(0.9,1.3,0.5,0x1a237e,0,1.25,0,boss);box(0.2,0.8,0.1,0xc62828,0,1.4,0.28,boss);
+box(0.35,0.7,0.3,0x1a237e,-0.22,0.35,0,boss);box(0.35,0.7,0.3,0x1a237e,0.22,0.35,0,boss);
+box(0.6,0.6,0.55,0xffcc99,0,2.2,0,boss);box(0.65,0.15,0.6,0x333333,0,2.55,0,boss);
+boss.position.set(-17,0,-17.5);boss.rotation.y=Math.PI;boss.scale.setScalar(1.25);scene.add(boss);
+
+const kids=[];
+function makeKid(i){
+  const g=new THREE.Group();
+  const c=new THREE.Color().setHSL(R(),0.75,0.55).getHex();
+  box(0.5,0.6,0.3,c,0,0.65,0,g);
+  box(0.16,0.35,0.16,0x333333,-0.12,0.18,0,g);box(0.16,0.35,0.16,0x333333,0.12,0.18,0,g);
+  const aL=box(0.14,0.5,0.14,c,-0.34,0.7,0,g),aR=box(0.14,0.5,0.14,c,0.34,0.7,0,g);
+  const head=box(0.44,0.44,0.44,0xffcc99,0,1.2,0,g);
+  box(0.08,0.08,0.02,0x000000,-0.1,1.24,0.23,g);box(0.08,0.08,0.02,0x000000,0.1,1.24,0.23,g);
+  box(0.48,0.12,0.48,[0x3e2723,0xffd54f,0xb71c1c,0x212121][i%4],0,1.46,0,g);
+  g.scale.setScalar(1.35);scene.add(g);
+  const x=rr(-10,8),z=rr(-8,2);
+  g.position.set(x,0,z);
+  const k={g,aL,aR,head,pos:g.position,idx:i,state:"idle",stateT:0,t:rr(8,16),tx:x,tz:z,calm:0,silent:false,fly:0,partner:null,burst:0,shootT:0,fightFx:0,flyT:0,ph:R()*6};
+  kids.push(k);
+}
+for(let i=0;i<14;i++)makeKid(i);
+
+/* автомат у камеры */
+const gun=new THREE.Group();
+box(0.12,0.12,0.9,0x222222,0,0,0,gun);box(0.1,0.3,0.14,0x333333,0,-0.2,0.15,gun);box(0.08,0.08,0.4,0x111111,0,0.02,-0.6,gun);
+gun.position.set(0.35,-0.3,-0.7);gun.visible=false;camera.add(gun);
+
+/* вода (цунами) */
+const water=new THREE.Mesh(new THREE.BoxGeometry(40,1,40),new THREE.MeshLambertMaterial({color:0x2288ff,transparent:true,opacity:0.55}));
+water.position.set(0,-5,0);water.visible=false;scene.add(water);
+
+/* ---------- звук ---------- */
+let AC=null;
+function snd(f,d,type,v,end){try{if(!AC)return;const o=AC.createOscillator(),g=AC.createGain();o.type=type||"square";o.frequency.value=f;
+ if(end)o.frequency.exponentialRampToValueAtTime(Math.max(20,end),AC.currentTime+d);
+ g.gain.value=v||0.05;g.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+
+/* ---------- состояние ---------- */
+const G={running:false,over:false,t:0,shift:180,hp:100,bld:100,anger:0,gun:false,calling:false,shake:0,quakeT:0,flood:0,floodPhase:0,floodT:0,evT:25,evN:0,cries:0,slow:0,shiftOver:false,gunShown:0,calmCd:0,bldDead:false};
+const P={x:0,y:0,z8:0,z:8,vy:0};P.x=0;P.z=14;P.y=0;
+let yaw=0,pitch=0;
+const keys={};
+let msgT=0,banT=0,hitA=0;
+
+function msg(t,s){$("msg").textContent=t;msgT=s||3}
+function banner(t,s){const b=$("banner");b.textContent=t;b.style.opacity=1;banT=s||2.2}
+function hurt(d){
+  if(G.over||G.gunShown>0&&false)return;
+  G.hp-=d;G.anger=Math.min(100,G.anger+d*1.3);hitA=1;
+  if(G.hp<=0){G.hp=0;finish(2)}
+}
+function dmgBld(d){if(G.bld>0){G.bld=Math.max(0,G.bld-d);if(G.bld<=0&&!G.bldDead){G.bldDead=true;banner("САДИК УНИЧТОЖЕН",3)}}}
+
+/* ---------- эффекты ---------- */
+const parts=[],pGeo=new THREE.BoxGeometry(1,1,1);
+function burst(p,n,color,spd,life,size,grav){
+  for(let i=0;i<n&&parts.length<260;i++){
+    const m=new THREE.Mesh(pGeo,new THREE.MeshBasicMaterial({color}));
+    const s=size||0.14;m.scale.set(s,s,s);m.position.copy(p);scene.add(m);
+    parts.push({m,v:new THREE.Vector3(rr(-1,1),rr(0.2,1.2),rr(-1,1)).multiplyScalar(spd||5),life:life||1,g:grav===undefined?9:grav});
+  }
+}
+const expl=[],projs=[],beams=[],poops=[];
+function explode(p,r){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(1,16,12),new THREE.MeshBasicMaterial({color:0xff8a00,transparent:true,opacity:0.9}));
+  m.position.copy(p);m.position.y+=0.8;scene.add(m);expl.push({m,t:0,r});
+  burst(m.position,18,0xffb300,8,1.2,0.2);burst(m.position,10,0x444444,6,1.4,0.25);
+  const d=Math.hypot(P.x-p.x,(P.y+1)-(p.y+0.8),P.z-p.z);
+  if(d<r+1)hurt(4+10*(1-d/(r+1)));
+  G.shake=Math.max(G.shake,0.8);dmgBld(r*0.6);snd(120,0.5,"sawtooth",0.12,30);
+}
+function beamMesh(a,b,rad,color,op){
+  const dir=new THREE.Vector3().subVectors(b,a),len=dir.length();
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(rad,rad,len,6),new THREE.MeshBasicMaterial({color,transparent:true,opacity:op}));
+  m.position.copy(a).addScaledVector(dir,0.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.clone().normalize());
+  scene.add(m);return m;
+}
+function spawnProj(from,to,spd,color,size,dmg,grav,shape){
+  const g=shape==="box"?new THREE.BoxGeometry(1,1,1):new THREE.SphereGeometry(0.5,8,8);
+  const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color}));m.scale.setScalar(size);m.position.copy(from);scene.add(m);
+  const d=new THREE.Vector3().subVectors(to,from);const dist=d.length();d.normalize();
+  d.x+=rr(-0.07,0.07);d.z+=rr(-0.07,0.07);d.normalize();
+  const v=d.multiplyScalar(spd);if(grav>0)v.y+=dist*0.12;
+  projs.push({m,v,dmg,g:grav,life:5});
+}
+const eyeP=()=>new THREE.Vector3(P.x,P.y+1.0,P.z);
+const headPos=k=>new THREE.Vector3(k.pos.x,k.pos.y+1.7,k.pos.z);
+
+/* ---------- действия детей ---------- */
+const ACTIONS=[["throw",30],["explode",10],["laser",14],["poop",14],["fly",10],["fight",12],["cry",10],["shoot",12]];
+function pickAction(){let t=0;for(const a of ACTIONS)t+=a[1];let r=R()*t;for(const a of ACTIONS){r-=a[1];if(r<=0)return a[0]}return"throw"}
+function faceP(k){k.g.rotation.y=Math.atan2(P.x-k.pos.x,P.z-k.pos.z)}
+function startAction(k){
+  const a=pickAction();
+  if(a==="throw"){faceP(k);k.state="throw";k.stateT=0.7;
+    const shapes=["box","sphere"],col=cols[Math.floor(R()*6)];
+    spawnProj(headPos(k),eyeP(),12,col,rr(0.3,0.7),3,9,shapes[Math.floor(R()*2)]);snd(300,0.15,"triangle",0.04,500);}
+  else if(a==="explode"){k.state="explode";k.stateT=1.3;k.bombM=new THREE.Mesh(new THREE.SphereGeometry(0.3,8,8),new THREE.MeshBasicMaterial({color:0xff2222}));k.bombM.position.y=2.0;k.g.add(k.bombM);}
+  else if(a==="laser"){faceP(k);k.state="laser";k.stateT=1.3;k.laserFired=false;
+    const tgt=eyeP().add(new THREE.Vector3(rr(-0.5,0.5),0,rr(-0.5,0.5)));k.laserTgt=tgt;
+    k.laserM=beamMesh(headPos(k),tgt,0.02,0xff0000,0.5);}
+  else if(a==="poop"){k.state="poop";k.stateT=1;
+    const m=new THREE.Mesh(new THREE.SphereGeometry(0.28,8,6),mat(0x5d4037));m.scale.y=0.6;m.position.set(k.pos.x+rr(-.3,.3),k.pos.y+0.15,k.pos.z+rr(-.3,.3));scene.add(m);poops.push({m,t:12});msg("Кто-то покакал! Не наступите.",2.5);}
+  else if(a==="fly"){k.state="fly";k.stateT=7;k.flyT=0;k.bx=k.pos.x;k.bz=k.pos.z;}
+  else if(a==="fight"){
+    let best=null,bd=9;for(const o of kids){if(o!==k&&o.state==="idle"&&!o.silent&&o.pos.y>-3&&k.pos.y>-3){const d=o.pos.distanceTo(k.pos);if(d<bd){bd=d;best=o}}}
+    if(best){k.state=best.state="fight";k.stateT=best.stateT=3;k.partner=best;best.partner=k;k.tx=best.tx=(k.pos.x+best.pos.x)/2;k.tz=best.tz=(k.pos.z+best.pos.z)/2;}
+    else{k.t=0.5}}
+  else if(a==="cry"){k.state="cry";k.stateT=2;G.cries++;
+    if(G.cries>=3&&G.floodPhase===0&&P.y>-2){G.cries=0;startFlood()}}
+  else if(a==="shoot"){faceP(k);k.state="shoot";k.stateT=1.2;k.burst=3;k.shootT=0.2;}
+}
+function startFlood(){G.floodPhase=1;G.floodT=0;water.visible=true;banner("ЦУНАМИ!",2.5);msg("Дети заплакали так сильно, что пришла волна.",3)}
+function startQuake(){G.quakeT=4.5;G.shake=1.2;banner("ЗЕМЛЕТРЯСЕНИЕ!",2.5);dmgBld(7);snd(60,1.5,"sawtooth",0.12,25)}
+
+function nav(k,dest,dDown){
+  const p=k.pos,inCh=p.x>12.3&&p.x<17.7&&p.z>=5.2&&p.z<=21,kdown=p.z>20.5&&p.x>4,kup=!inCh&&!kdown;
+  if(dDown&&kup)return[15,4.5];
+  if(dDown&&inCh)return[15,22];
+  if(!dDown&&kdown)return[15,21.2];
+  if(!dDown&&inCh)return[15,4.0];
+  return dest;
+}
+function moveK(k,tx,tz,sp,dt){
+  const dx=tx-k.pos.x,dz=tz-k.pos.z,d=Math.hypot(dx,dz);
+  if(d>0.3){k.pos.x+=dx/d*sp*dt;k.pos.z+=dz/d*sp*dt;k.g.rotation.y=Math.atan2(dx,dz);return true}
+  return false;
+}
+
+function updateKids(dt){
+  const pd=G.t/150;
+  for(const k of kids){
+    k.ph+=dt*9;
+    let moving=false;
+    if(k.silent){k.aL.rotation.x=k.aR.rotation.x=0;k.pos.y=groundHeight(k.pos.x,k.pos.z);continue}
+    if(k.calm>0){k.calm-=dt;
+      if(k.state!=="idle"){endState(k)}
+      k.head.material=mat(0xaaddff);
+    }
+    const dP=Math.hypot(k.pos.x-P.x,k.pos.z-P.z);
+    if(G.calling&&dP<70&&k.state!=="fly"){
+      if(k.state!=="idle")endState(k);
+      const a=k.idx*0.9,tx=P.x+Math.cos(a)*2.4,tz=P.z+Math.sin(a)*2.4,pDown=P.y<-2;
+      const w=nav(k,[tx,tz],pDown);moving=moveK(k,w[0],w[1],3.6,dt);
+      k.pos.y=groundHeight(k.pos.x,k.pos.z);
+    }else if(k.calm>0){
+      moving=false;
+    }else{
+      k.t-=dt;
+      switch(k.state){
+       case"idle":
+        if(Math.hypot(k.tx-k.pos.x,k.tz-k.pos.z)<0.5){
+          if(k.pos.y<-3){k.tx=rr(5,19);k.tz=rr(21,35)}else{k.tx=rr(-18,10);k.tz=rr(-10,18)}}
+        moving=moveK(k,k.tx,k.tz,2.2,dt);
+        if(k.t<=0)startAction(k);
+        break;
+       case"fly":
+        k.flyT+=dt;k.pos.x=k.bx+Math.cos(k.flyT*2)*2;k.pos.z=k.bz+Math.sin(k.flyT*2)*2;
+        k.pos.x=Math.max(-19,Math.min(19,k.pos.x));k.pos.z=Math.max(-19,Math.min(19,k.pos.z));
+        k.pos.y=Math.min(3.5,k.pos.y+dt*2.5);k.aL.rotation.z=2.5;k.aR.rotation.z=-2.5;
+        k.shootT-=dt;if(k.shootT<=0){k.shootT=1.4;spawnProj(headPos(k),eyeP(),11,0xffd54f,0.35,3,9,"box")}
+        k.stateT-=dt;if(k.stateT<=0)endState(k);
+        break;
+       case"explode":
+        k.stateT-=dt;if(k.bombM)k.bombM.visible=((k.stateT*8)|0)%2===0;
+        if(k.stateT<=0){k.g.remove(k.bombM);k.bombM=null;explode(k.pos,4.2);endState(k)}
+        break;
+       case"laser":
+        k.stateT-=dt;if(k.laserM&&!k.laserFired){faceP(k);k.laserM.material.opacity=0.4+0.4*Math.sin(G.t*30)}
+        if(k.stateT<=0.55&&!k.laserFired){
+          k.laserFired=true;scene.remove(k.laserM);
+          const a=headPos(k),dir=new THREE.Vector3().subVectors(k.laserTgt,a).normalize(),b=a.clone().addScaledVector(dir,60);
+          const bm=beamMesh(a,b,0.15,0xff2222,0.9);beams.push({m:bm,t:0.4});snd(900,0.4,"sawtooth",0.07,200);
+          const e=eyeP(),ap=new THREE.Vector3().subVectors(e,a),proj=ap.dot(dir),cl=a.clone().addScaledVector(dir,proj);
+          if(proj>0&&cl.distanceTo(e)<1.1)hurt(7);else{dmgBld(0.8);burst(k.laserTgt,6,0xff5500,4,0.8)}
+          k.laserM=null;
+        }
+        if(k.stateT<=0)endState(k);
+        break;
+       case"fight":
+        k.stateT-=dt;moving=moveK(k,k.tx,k.tz,2.4,dt);
+        k.fightFx-=dt;if(k.fightFx<=0){k.fightFx=0.4;burst(new THREE.Vector3(k.tx,k.pos.y+0.8,k.tz),4,0xdddddd,2.5,0.7,0.2,2);if(k.idx<k.partner.idx){dmgBld(0.25);G.shake=Math.max(G.shake,0.15)}}
+        k.aL.rotation.x=Math.sin(k.ph*2);k.aR.rotation.x=-Math.sin(k.ph*2);
+        if(k.stateT<=0){const o=k.partner;endState(k);if(o&&o.state==="fight")endState(o)}
+        break;
+       case"cry":
+        k.stateT-=dt;
+        if(R()<0.5)burst(new THREE.Vector3(k.pos.x+rr(-.2,.2),k.pos.y+1.2,k.pos.z+0.2),1,0x4fc3f7,1.5,0.8,0.1,6);
+        if(k.stateT<=0)endState(k);
+        break;
+       default:
+        k.stateT-=dt;
+        if(k.state==="shoot"){k.shootT-=dt;if(k.shootT<=0&&k.burst>0){k.burst--;k.shootT=0.25;spawnProj(headPos(k),eyeP(),18,0xffee00,0.18,3,0,"sphere");snd(700,0.08,"square",0.04,300);faceP(k)}}
+        if(k.stateT<=0)endState(k);
+      }
+      if(k.state!=="fly"){const gy=groundHeight(k.pos.x,k.pos.z);k.pos.y=k.pos.y>gy+0.05?Math.max(gy,k.pos.y-dt*6):gy}
+    }
+    if(moving){k.aL.rotation.x=Math.sin(k.ph)*0.8;k.aR.rotation.x=-Math.sin(k.ph)*0.8;k.g.position.y=k.pos.y+Math.abs(Math.sin(k.ph))*0.08}
+    else if(k.state==="idle"||k.calm>0){k.aL.rotation.x=k.aR.rotation.x=0}
+  }
+}
+function endState(k){
+  k.state="idle";k.t=rr(3.5,8)*(1.2-Math.min(1,G.t/200)*0.5);k.aL.rotation.z=k.aR.rotation.z=0;
+  if(k.bombM){k.g.remove(k.bombM);k.bombM=null}
+  if(k.laserM){scene.remove(k.laserM);k.laserM=null}
+}
+
+/* ---------- ввод ---------- */
+addEventListener("keydown",e=>{
+  keys[e.code]=true;
+  if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault();
+  if(!G.running||G.over)return;
+  if(e.code==="KeyE")interact();
+  if(e.code==="KeyQ"){G.calling=!G.calling;msg(G.calling?"Дети идут за вами. Ведите их, куда нужно.":"Вы отпустили детей.",2.5)}
+  if(e.code==="KeyF"){
+    if(!G.gun){msg("У вас нет автомата. Может, босс что-то даст.",2.5);return}
+    if(G.gunShown>0)return;
+    G.gunShown=3.2;banner("ТИШИНА",2.5);msg("Вы показываете автомат детям...",3);
+    for(const k of kids){if(k.pos.distanceTo(new THREE.Vector3(P.x,P.y,P.z))<45){endState(k);k.silent=true;k.head.material=mat(0xffffff)}}
+  }
+});
+addEventListener("keyup",e=>keys[e.code]=false);
+let dragging=false;
+addEventListener("mousedown",()=>{dragging=true;if(G.running&&!G.over&&document.pointerLockElement!==renderer.domElement){try{renderer.domElement.requestPointerLock()}catch(e){}}});
+addEventListener("mouseup",()=>dragging=false);
+addEventListener("mousemove",e=>{
+  if(!G.running||G.over)return;
+  if(document.pointerLockElement===renderer.domElement||dragging){
+    yaw-=e.movementX*0.0025;pitch=Math.max(-1.4,Math.min(1.4,pitch-e.movementY*0.0025));
+  }
+});
+
+function nearBoss(){return Math.hypot(P.x-boss.position.x,P.z-boss.position.z)<3.6}
+function nearBomb(){return Math.hypot(P.x-17.5,P.z+18.5)<2.3&&P.y>-2}
+function nearLever(){return Math.hypot(P.x-19,P.z-34)<3&&P.y<-3}
+function kidsInBasement(){return kids.filter(k=>k.pos.y<-3).length}
+function interact(){
+  if(nearBoss()){
+    if(G.shiftOver){finish(1);return}
+    if(!G.gun){G.gun=true;gun.visible=true;msg("Босс: «Держите.» Вам выдали автомат. Нажмите F, чтобы показать его детям.",5);return}
+    msg("Босс: «Больше мне вам нечего дать. Работайте.»",3);return;
+  }
+  if(nearBomb()){
+    if(G.anger<50){msg("Вы нашли ядерную бомбу. Но вы слишком спокойны, чтобы её взорвать. Нужно разозлиться.",4);return}
+    finish(4);return;
+  }
+  if(nearLever()){
+    const n=kidsInBasement(),need=Math.min(8,Math.ceil(kids.length*0.6));
+    if(n>=need){finish(5)}else msg("В подвале слишком мало детей ("+n+" из "+need+"). Нажмите Q, чтобы они шли за вами.",4);
+    return;
+  }
+  if(G.calmCd>0)return;
+  let best=null,bd=3.8;const fx=-Math.sin(yaw),fz=-Math.cos(yaw);
+  for(const k of kids){const dx=k.pos.x-P.x,dz=k.pos.z-P.z,d=Math.hypot(dx,dz);if(d<bd&&(dx*fx+dz*fz)/(d||1)>0.2&&Math.abs(k.pos.y-P.y)<2){bd=d;best=k}}
+  if(best){best.calm=9;endState(best);G.calmCd=0.8;msg("Ребёнок успокоен на 9 секунд.",1.8);snd(500,0.2,"sine",0.05,800)}
+  else msg("Рядом нет ребёнка, которого можно успокоить.",1.5);
+}
+
+/* ---------- завершение ---------- */
+function finish(n){
+  if(G.over)return;G.over=true;
+  try{document.exitPointerLock()}catch(e){}
+  const go=()=>{
+    const f=saveFound(n);
+    $("endTitle").textContent=ENDINGS[n].t;$("endText").textContent=ENDINGS[n].x();
+    $("endFound").textContent="Найдено концовок: "+f.length+" из 5";
+    $("end").style.display="flex";$("hud").style.display="none";
+  };
+  if(n===4){const fl=$("flash");fl.style.transition="opacity 1.2s";fl.style.opacity=1;explode(new THREE.Vector3(17.5,0,-18.5),12);setTimeout(go,1600)}
+  else setTimeout(go,n===2?600:400);
+}
+
+/* ---------- главный цикл ---------- */
+function update(dt){
+  G.t+=dt;G.calmCd=Math.max(0,G.calmCd-dt);G.slow=Math.max(0,G.slow-dt);
+  // конец смены
+  if(!G.shiftOver&&G.t>=G.shift){G.shiftOver=true;banner("СМЕНА ОКОНЧЕНА",3);msg("Идите к боссу в кабинет (дальний левый угол) и увольняйтесь.",6)}
+  // события
+  G.evT-=dt;
+  if(G.evT<=0&&!G.shiftOver){G.evT=rr(22,36);G.evN++;if(G.evN%2===1)startQuake();else if(G.floodPhase===0&&P.y>-2)startFlood();else startQuake()}
+  if(G.quakeT>0){G.quakeT-=dt;G.shake=Math.max(G.shake,0.5);
+    if(R()<dt*1.5){hurt(1)}
+    const qx=P.x+rr(-1,1)*dt*4,qz=P.z+rr(-1,1)*dt*4;if(!hit(qx,P.z))P.x=qx;if(!hit(P.x,qz))P.z=qz}
+  // вода
+  let floodSlow=false;
+  if(G.floodPhase>0){
+    G.floodT+=dt;
+    let h=0;
+    if(G.floodPhase===1){h=Math.min(1.5,G.floodT/5*1.5);if(G.floodT>=5){G.floodPhase=2;G.floodT=0}}
+    else if(G.floodPhase===2){h=1.5;if(G.floodT>=4){G.floodPhase=3;G.floodT=0}}
+    else{h=Math.max(0,1.5*(1-G.floodT/5));if(G.floodT>=5){G.floodPhase=0;water.visible=false;h=0}}
+    G.flood=h;water.position.y=h-0.5;
+    if(P.y>-2&&h>0.4)floodSlow=true;
+    if(P.y>-2&&h>0.9)hurt(0.7*dt);
+    dmgBld(0.35*dt);
+  }
+  // игрок
+  let mx=0,mz=0;
+  if(keys.KeyW)mz-=1;if(keys.KeyS)mz+=1;if(keys.KeyA)mx-=1;if(keys.KeyD)mx+=1;
+  const l=Math.hypot(mx,mz)||1;mx/=l;mz/=l;
+  const sp=((keys.ShiftLeft||keys.ShiftRight)?8:5)*(G.slow>0?0.45:1)*(floodSlow?0.55:1);
+  const vx=(Math.sin(yaw)*mz+Math.cos(yaw)*mx)*sp*dt,vz=(Math.cos(yaw)*mz-Math.sin(yaw)*mx)*sp*dt;
+  if(!hit(P.x+vx,P.z))P.x+=vx;if(!hit(P.x,P.z+vz))P.z+=vz;
+  if(keys.ArrowLeft)yaw+=dt*1.8;if(keys.ArrowRight)yaw-=dt*1.8;
+  if(keys.ArrowUp)pitch=Math.min(1.4,pitch+dt*1.5);if(keys.ArrowDown)pitch=Math.max(-1.4,pitch-dt*1.5);
+  const gh=groundHeight(P.x,P.z);
+  P.vy-=14*dt;P.y+=P.vy*dt;
+  if(P.y<=gh){P.y=gh;P.vy=0;if(keys.Space)P.vy=5.5}
+  // злость
+  G.anger=Math.max(0,G.anger-dt*0.4);
+  if(G.bld<50)G.anger=Math.min(100,G.anger+dt*0.5);
+  // дети
+  updateKids(dt);
+  // снаряды
+  for(let i=projs.length-1;i>=0;i--){
+    const p=projs[i];p.life-=dt;p.v.y-=p.g*dt;p.m.position.addScaledVector(p.v,dt);
+    const pos=p.m.position;let gone=p.life<=0;
+    if(pos.distanceTo(eyeP())<0.85){hurt(p.dmg);burst(pos,5,0xffffff,4,0.6);gone=true}
+    else if(pos.y<groundHeight(pos.x,pos.z)+0.05||Math.abs(pos.x)>20||pos.z<-20||pos.y>5){if(R()<0.4)dmgBld(0.15);burst(pos,3,0xcccccc,3,0.5,0.1);gone=true}
+    if(gone){scene.remove(p.m);projs.splice(i,1)}
+  }
+  for(let i=expl.length-1;i>=0;i--){const e=expl[i];e.t+=dt;const s=e.r*Math.min(1,e.t/0.4);e.m.scale.setScalar(Math.max(0.1,s));e.m.material.opacity=Math.max(0,0.9-e.t*1.2);if(e.t>0.8){scene.remove(e.m);expl.splice(i,1)}}
+  for(let i=beams.length-1;i>=0;i--){const b=beams[i];b.t-=dt;if(b.t<=0){scene.remove(b.m);beams.splice(i,1)}}
+  for(let i=poops.length-1;i>=0;i--){const p=poops[i];p.t-=dt;
+    if(Math.hypot(p.m.position.x-P.x,p.m.position.z-P.z)<0.9&&P.y<p.m.position.y+0.8){if(G.slow<=0)msg("Вы вляпались! Скользко и противно.",2);G.slow=2.5;G.anger=Math.min(100,G.anger+dt*4)}
+    if(p.t<=0){scene.remove(p.m);poops.splice(i,1)}}
+  for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.life-=dt;p.v.y-=p.g*dt;p.m.position.addScaledVector(p.v,dt);if(p.m.position.y<-5.9)p.v.set(0,0,0);if(p.life<=0){scene.remove(p.m);p.m.material.dispose();parts.splice(i,1)}}
+  // разрушенный садик
+  ceiling.visible=G.bld>50;
+  if(G.bld<70&&R()<dt*(1.2-G.bld/100)*3){burst(new THREE.Vector3(rr(-18,18),4.8,rr(-18,18)),3,0x999999,1.5,1.5,0.18,9)}
+  amb.intensity=0.45+0.35*(G.bld/100)+(G.bld<60&&R()<0.05?-0.3:0);
+  // автомат
+  if(G.gun){const up=G.gunShown>0;if(up)G.gunShown-=dt;
+    gun.position.lerp(up?new THREE.Vector3(0.0,-0.15,-0.55):new THREE.Vector3(0.35,-0.3,-0.7),0.15);
+    if(up&&G.gunShown<=0&&!G.over)finish(3)}
+  // тряска
+  G.shake=Math.max(0,G.shake-dt*1.2);
+  camera.position.set(P.x+rr(-1,1)*G.shake*0.12,P.y+1.7+rr(-1,1)*G.shake*0.12,P.z+rr(-1,1)*G.shake*0.12);
+  camera.rotation.y=yaw;camera.rotation.x=pitch;
+  hud();
+}
+function hit(x,z){const r=0.4;for(const c of colliders){if(x+r>c.x1&&x-r<c.x2&&z+r>c.z1&&z-r<c.z2)return true}return false}
+
+function hud(){
+  $("bHp").style.width=G.hp+"%";$("bBld").style.width=G.bld+"%";$("bAng").style.width=G.anger+"%";
+  const left=Math.max(0,G.shift-G.t),m=Math.floor(left/60),s=Math.floor(left%60);
+  $("clock").textContent=G.shiftOver?"Смена окончена":"Смена: "+m+":"+(s<10?"0":"")+s;
+  $("goal").textContent=G.shiftOver?"Идите к боссу: кабинет в дальнем левом углу.":"Продержитесь до конца смены. Или найдите другой выход.";
+  if(msgT>0){msgT-=1/60;if(msgT<=0)$("msg").textContent=""}
+  if(banT>0){banT-=1/60;if(banT<=0)$("banner").style.opacity=0}
+  hitA=Math.max(0,hitA-0.03);$("hit").style.opacity=hitA;
+  let pr="";
+  if(nearBoss())pr=G.shiftOver?"E: уволиться и забрать зарплату":(G.gun?"Босс смотрит на вас. E: поговорить":"E: поговорить с боссом");
+  else if(nearBomb())pr="E: взорвать ядерную бомбу";
+  else if(nearLever())pr="E: запереть дверь подвала (детей внизу: "+kidsInBasement()+")";
+  else if(G.gun&&G.gunShown<=0)pr="F: показать автомат детям";
+  $("prompt").textContent=pr;
+}
+
+/* ---------- запуск ---------- */
+$("startBtn").onclick=()=>{
+  try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}
+  $("menu").style.display="none";$("hud").style.display="block";G.running=true;
+  try{renderer.domElement.requestPointerLock()}catch(e){}
+  banner("СМЕНА НАЧАЛАСЬ",2.5);msg("Босс: «Удачи. Она вам понадобится.»",4);
+};
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(G.running&&!G.over)update(dt);
+  renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+camera.position.set(P.x,1.7,P.z);
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
