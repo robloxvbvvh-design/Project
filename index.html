@@ -31,6 +31,18 @@ canvas{display:block}
 .screen button{margin-top:14px;padding:14px 38px;font-size:20px;font-weight:700;border:0;border-radius:10px;background:#ffb300;color:#222;cursor:pointer}
 .screen small{opacity:.65;margin-top:10px;line-height:1.6}
 #end{display:none}
+#touch{position:absolute;inset:0;display:none}
+body.touch #touch{display:block}
+body.touch #help{display:none}
+body.touch #prompt{bottom:34%}
+body.touch #msg{bottom:42%}
+body.touch .bars{width:190px;padding:8px}
+#jbase,#jknob{position:absolute;border-radius:50%;display:none;transform:translate(-50%,-50%)}
+#jbase{width:120px;height:120px;border:2px solid rgba(255,255,255,.45);background:rgba(255,255,255,.08)}
+#jknob{width:54px;height:54px;background:rgba(255,255,255,.55)}
+#tbtns{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(2,84px);gap:10px;pointer-events:auto}
+#tbtns button{height:62px;border:2px solid rgba(255,255,255,.55);border-radius:14px;background:rgba(0,0,0,.45);color:#fff;font:700 14px "Segoe UI",Arial,sans-serif;touch-action:none;-webkit-user-select:none;user-select:none}
+#tbtns button:active{background:rgba(255,179,0,.6)}
 </style>
 </head>
 <body>
@@ -48,6 +60,8 @@ canvas{display:block}
   <div id="cross"></div>
   <div id="hit"></div>
   <div id="flash"></div>
+  <div id="touch"><div id="jbase"></div><div id="jknob"></div>
+    <div id="tbtns"><button data-k="jump">Прыжок</button><button data-k="E">Действие</button><button data-k="Q">Позвать</button><button data-k="F">Автомат</button></div></div>
   <div id="help">WASD ходьба, Shift бег, Пробел прыжок<br>E действие / успокоить ребёнка<br>Q позвать детей за собой, F показать автомат</div>
 </div>
 
@@ -57,7 +71,7 @@ canvas{display:block}
   <p>Всего пять концовок. Найдёте все?</p>
   <button id="startBtn">Начать смену</button>
   <small id="found"></small>
-  <small>WASD ходьба, мышь обзор (кликните по экрану для захвата мыши), Shift бег, Пробел прыжок, E действие, Q позвать детей, F показать автомат.<br>Если мышь не захватывается, смотрите стрелками клавиатуры или зажатой кнопкой мыши.</small>
+  <small>WASD ходьба, мышь обзор (кликните по экрану для захвата мыши), Shift бег, Пробел прыжок, E действие, Q позвать детей, F показать автомат.<br>На телефоне: левым пальцем ходите, правым смотрите по сторонам, кнопки справа внизу. Лучше держать телефон горизонтально.<br>Если мышь не захватывается, смотрите стрелками клавиатуры или зажатой кнопкой мыши.</small>
 </div>
 
 <div id="end" class="screen">
@@ -381,13 +395,59 @@ addEventListener("keydown",e=>{
   if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault();
   if(!G.running||G.over)return;
   if(e.code==="KeyE")interact();
-  if(e.code==="KeyQ"){G.calling=!G.calling;msg(G.calling?"Дети идут за вами. Ведите их, куда нужно.":"Вы отпустили детей.",2.5)}
-  if(e.code==="KeyF"){
-    if(!G.gun){msg("У вас нет автомата. Может, босс что-то даст.",2.5);return}
-    if(G.gunShown>0)return;
-    G.gunShown=3.2;banner("ТИШИНА",2.5);msg("Вы показываете автомат детям...",3);
-    for(const k of kids){if(k.pos.distanceTo(new THREE.Vector3(P.x,P.y,P.z))<45){endState(k);k.silent=true;k.head.material=mat(0xffffff)}}
+  if(e.code==="KeyQ")doQ();
+  if(e.code==="KeyF")doF();
+});
+function doQ(){G.calling=!G.calling;msg(G.calling?"Дети идут за вами. Ведите их, куда нужно.":"Вы отпустили детей.",2.5)}
+function doF(){
+  if(!G.gun){msg("У вас нет автомата. Может, босс что-то даст.",2.5);return}
+  if(G.gunShown>0)return;
+  G.gunShown=3.2;banner("ТИШИНА",2.5);msg("Вы показываете автомат детям...",3);
+  for(const k of kids){if(k.pos.distanceTo(new THREE.Vector3(P.x,P.y,P.z))<45){endState(k);k.silent=true;k.head.material=mat(0xffffff)}}
+}
+/* сенсорное управление */
+const joy={id:null,x:0,y:0,run:false};let lookId=null,lx=0,ly=0,touchJump=false;
+const jb=$("jbase"),jk=$("jknob");
+function place(el,x,y){el.style.left=x+"px";el.style.top=y+"px"}
+let jox=0,joy0=0;
+addEventListener("touchstart",e=>{
+  document.body.classList.add("touch");
+  if(!G.running||G.over)return;
+  for(const t of e.changedTouches){
+    if(t.target.closest&&t.target.closest("#tbtns"))continue;
+    if(t.clientX<innerWidth*0.45&&joy.id===null){joy.id=t.identifier;jox=t.clientX;joy0=t.clientY;place(jb,jox,joy0);place(jk,jox,joy0);jb.style.display=jk.style.display="block"}
+    else if(lookId===null&&t.clientX>=innerWidth*0.45){lookId=t.identifier;lx=t.clientX;ly=t.clientY}
+    e.preventDefault();
   }
+},{passive:false});
+addEventListener("touchmove",e=>{
+  if(!G.running||G.over)return;
+  for(const t of e.changedTouches){
+    if(t.identifier===joy.id){
+      let dx=t.clientX-jox,dy=t.clientY-joy0;const m=Math.hypot(dx,dy),r=55;
+      if(m>r){dx=dx/m*r;dy=dy/m*r}
+      joy.x=dx/r;joy.y=dy/r;joy.run=m>r*1.15;place(jk,jox+dx,joy0+dy);
+    }else if(t.identifier===lookId){
+      yaw-=(t.clientX-lx)*0.006;pitch=Math.max(-1.4,Math.min(1.4,pitch-(t.clientY-ly)*0.006));lx=t.clientX;ly=t.clientY;
+    }
+  }
+  e.preventDefault();
+},{passive:false});
+function tEnd(e){
+  for(const t of e.changedTouches){
+    if(t.identifier===joy.id){joy.id=null;joy.x=joy.y=0;joy.run=false;jb.style.display=jk.style.display="none"}
+    if(t.identifier===lookId)lookId=null;
+  }
+}
+addEventListener("touchend",tEnd);addEventListener("touchcancel",tEnd);
+document.querySelectorAll("#tbtns button").forEach(b=>{
+  const k=b.dataset.k;
+  b.addEventListener("touchstart",e=>{e.preventDefault();e.stopPropagation();
+    if(!G.running||G.over)return;
+    if(k==="jump")touchJump=true;else if(k==="E")interact();else if(k==="Q")doQ();else doF();
+  },{passive:false});
+  b.addEventListener("touchend",e=>{e.preventDefault();if(k==="jump")touchJump=false},{passive:false});
+  b.addEventListener("touchcancel",()=>{touchJump=false});
 });
 addEventListener("keyup",e=>keys[e.code]=false);
 let dragging=false;
@@ -467,15 +527,15 @@ function update(dt){
   // игрок
   let mx=0,mz=0;
   if(keys.KeyW)mz-=1;if(keys.KeyS)mz+=1;if(keys.KeyA)mx-=1;if(keys.KeyD)mx+=1;
-  const l=Math.hypot(mx,mz)||1;mx/=l;mz/=l;
-  const sp=((keys.ShiftLeft||keys.ShiftRight)?8:5)*(G.slow>0?0.45:1)*(floodSlow?0.55:1);
+  mx+=joy.x;mz+=joy.y;const l=Math.hypot(mx,mz);if(l>1){mx/=l;mz/=l}
+  const sp=((keys.ShiftLeft||keys.ShiftRight||joy.run)?8:5)*(G.slow>0?0.45:1)*(floodSlow?0.55:1);
   const vx=(Math.sin(yaw)*mz+Math.cos(yaw)*mx)*sp*dt,vz=(Math.cos(yaw)*mz-Math.sin(yaw)*mx)*sp*dt;
   if(!hit(P.x+vx,P.z))P.x+=vx;if(!hit(P.x,P.z+vz))P.z+=vz;
   if(keys.ArrowLeft)yaw+=dt*1.8;if(keys.ArrowRight)yaw-=dt*1.8;
   if(keys.ArrowUp)pitch=Math.min(1.4,pitch+dt*1.5);if(keys.ArrowDown)pitch=Math.max(-1.4,pitch-dt*1.5);
   const gh=groundHeight(P.x,P.z);
   P.vy-=14*dt;P.y+=P.vy*dt;
-  if(P.y<=gh){P.y=gh;P.vy=0;if(keys.Space)P.vy=5.5}
+  if(P.y<=gh){P.y=gh;P.vy=0;if(keys.Space||touchJump)P.vy=5.5}
   // злость
   G.anger=Math.max(0,G.anger-dt*0.4);
   if(G.bld<50)G.anger=Math.min(100,G.anger+dt*0.5);
