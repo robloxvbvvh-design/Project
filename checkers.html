@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Шашки с тупым ботом</title>
+<style>
+  body{font-family:sans-serif;background:#222;color:#eee;display:flex;flex-direction:column;align-items:center;margin:0;padding:16px}
+  #board{display:grid;grid-template-columns:repeat(8,1fr);width:min(92vw,480px);aspect-ratio:1;border:4px solid #543;}
+  .sq{display:flex;align-items:center;justify-content:center;position:relative}
+  .l{background:#f0d9b5}.d{background:#b58863}
+  .sel{outline:4px solid #ff0;outline-offset:-4px}
+  .hint::after{content:"";width:30%;height:30%;border-radius:50%;background:rgba(0,160,0,.6);position:absolute}
+  .p{width:78%;height:78%;border-radius:50%;box-shadow:0 3px 5px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:min(5vw,26px);color:gold}
+  .w{background:#fafafa;border:3px solid #bbb}
+  .b{background:#333;border:3px solid #111}
+  button{margin-top:12px;padding:8px 16px;font-size:16px}
+</style>
+</head>
+<body>
+<h2>Шашки vs самый тупой бот</h2>
+<div id="status"></div>
+<div id="board"></div>
+<button onclick="init()">Новая игра</button>
+<p style="max-width:480px;font-size:14px;opacity:.7">Вы — белые (снизу). Бить обязательно. Бот ходит абсолютно случайно.</p>
+<script>
+let B, turn, sel, over, moves;
+const $ = id => document.getElementById(id);
+
+function init(){
+  B = Array.from({length:8},()=>Array(8).fill(''));
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    if((r+c)%2===1){ if(r<3)B[r][c]='b'; else if(r>4)B[r][c]='w'; }
+  }
+  turn='w'; sel=null; over=false;
+  start();
+}
+
+const inb=(r,c)=>r>=0&&r<8&&c>=0&&c<8;
+const side=p=>p?p.toLowerCase():'';
+
+// все ходы стороны s; если есть взятия — только они
+function allMoves(s){
+  let caps=[], simple=[];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    if(side(B[r][c])!==s)continue;
+    caps.push(...captures(r,c,s,[],[[r,c]]));
+    const p=B[r][c], king=p===p.toUpperCase();
+    const fwd=s==='w'?-1:1;
+    for(const dr of [-1,1])for(const dc of [-1,1]){
+      if(!king&&dr!==fwd)continue;
+      const nr=r+dr,nc=c+dc;
+      if(inb(nr,nc)&&!B[nr][nc])simple.push({path:[[r,c],[nr,nc]],cap:[]});
+    }
+  }
+  return caps.length?caps:simple;
+}
+
+function captures(r,c,s,done,path){
+  let res=[];
+  for(const dr of [-1,1])for(const dc of [-1,1]){
+    const mr=r+dr,mc=c+dc,nr=r+2*dr,nc=c+2*dc;
+    if(!inb(nr,nc))continue;
+    const m=B[mr][mc];
+    if(!m||side(m)===s||done.some(([a,b])=>a===mr&&b===mc))continue;
+    // клетка приземления пуста (или это стартовая клетка шашки)
+    const start=path[0];
+    if(B[nr][nc]&&!(nr===start[0]&&nc===start[1]))continue;
+    const nd=[...done,[mr,mc]], np=[...path,[nr,nc]];
+    const more=captures(nr,nc,s,nd,np);
+    if(more.length)res.push(...more); else res.push({path:np,cap:nd});
+  }
+  return res;
+}
+
+function apply(m){
+  const [sr,sc]=m.path[0],[er,ec]=m.path[m.path.length-1];
+  let p=B[sr][sc]; B[sr][sc]='';
+  m.cap.forEach(([r,c])=>B[r][c]='');
+  if(p==='w'&&er===0)p='W';
+  if(p==='b'&&er===7)p='B';
+  B[er][ec]=p;
+}
+
+function start(){
+  moves=allMoves(turn);
+  render();
+  if(!moves.length){
+    over=true;
+    $('status').textContent=turn==='w'?'Вы проиграли... боту повезло 😅':'Вы победили тупого бота! 🎉';
+    return;
+  }
+  $('status').textContent=turn==='w'?'Ваш ход':'Бот думает (не думает)...';
+  if(turn==='b')setTimeout(botMove,500);
+}
+
+function botMove(){
+  // самый тупой бот: случайный легальный ход
+  apply(moves[Math.floor(Math.random()*moves.length)]);
+  turn='w'; start();
+}
+
+function click(r,c){
+  if(over||turn!=='w')return;
+  const mine=moves.filter(m=>m.path[0][0]===r&&m.path[0][1]===c);
+  if(sel){
+    const m=moves.find(m=>m.path[0][0]===sel[0]&&m.path[0][1]===sel[1]&&
+      m.path[m.path.length-1][0]===r&&m.path[m.path.length-1][1]===c);
+    if(m){apply(m);sel=null;turn='b';start();return;}
+  }
+  sel=mine.length?[r,c]:null;
+  render();
+}
+
+function render(){
+  const el=$('board'); el.innerHTML='';
+  const targets=sel?moves.filter(m=>m.path[0][0]===sel[0]&&m.path[0][1]===sel[1]).map(m=>m.path[m.path.length-1]):[];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const d=document.createElement('div');
+    d.className='sq '+((r+c)%2?'d':'l');
+    if(sel&&sel[0]===r&&sel[1]===c)d.classList.add('sel');
+    if(targets.some(t=>t[0]===r&&t[1]===c))d.classList.add('hint');
+    const p=B[r][c];
+    if(p){
+      const x=document.createElement('div');
+      x.className='p '+side(p);
+      if(p===p.toUpperCase())x.textContent='♛';
+      d.appendChild(x);
+    }
+    d.onclick=()=>click(r,c);
+    el.appendChild(d);
+  }
+}
+init();
+</script>
+</body>
+</html>
