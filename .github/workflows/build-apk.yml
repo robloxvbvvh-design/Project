@@ -3,6 +3,8 @@ on:
   push:
     branches: ["**"]
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,3 +19,10 @@ jobs:
         with:
           name: Kinoteatr-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish APK to release (direct download link)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk kinoteatr.apk
+          gh release view kinoteatr-latest >/dev/null 2>&1 || gh release create kinoteatr-latest --title "Кинотеатр (APK)" --notes "Последняя сборка" --prerelease
+          gh release upload kinoteatr-latest kinoteatr.apk --clobber
