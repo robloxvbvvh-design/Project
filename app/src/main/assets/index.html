@@ -12,6 +12,12 @@ h1{margin:0;font-size:22px;color:var(--ac);letter-spacing:1px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;padding:16px}
 .card{background:var(--card);border-radius:14px;overflow:hidden;cursor:pointer}
 .poster{aspect-ratio:2/3;display:flex;align-items:flex-end;padding:12px;font-weight:800;font-size:20px;line-height:1.1;text-shadow:0 2px 8px #000}
+.poster{position:relative;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+.poster svg{width:80%;max-height:70%}
+.lg{font-weight:900;letter-spacing:3px}
+.where{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.where a{background:#1f2a44;color:#cfe0ff;text-decoration:none;padding:9px 13px;border-radius:9px;font-size:14px;font-weight:600}
+h3{margin:18px 0 4px;font-size:16px;color:var(--mut)}
 .meta{padding:10px 12px;color:var(--mut);font-size:13px}
 .meta b{display:block;color:var(--tx);font-size:15px;margin-bottom:2px}
 #view{display:none;padding:16px}
@@ -58,13 +64,34 @@ const SHOWS=[
   {t:'Animation vs. Coding / Video Games / Pokémon',q:'Alan Becker Animation vs Coding Video Games Pokemon'},
   {t:'Все серии Alan Becker',q:'Alan Becker animation vs animator all episodes'}]}
 ];
+
+const ART={
+dexter:`<svg viewBox="0 0 100 60"><path d="M50 4C50 4 36 22 36 31a14 14 0 0 0 28 0C64 22 50 4 50 4z" fill="#c0000f"/><path d="M42 30a8 8 0 0 0 6 8" stroke="#ff6b78" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+<div class="lg" style="font:900 30px Georgia,serif;letter-spacing:5px;color:#f4dede;margin-top:6px">DEXTER</div><div style="font-size:11px;letter-spacing:4px;color:#ff8a94">ALL SEASONS</div>`,
+bb:`<div style="display:flex;gap:6px"><div style="border:3px solid #e8fbe8;border-radius:6px;padding:4px 8px;text-align:left;color:#e8fbe8;background:#13803a"><div style="font-size:10px">35</div><div style="font:900 30px sans-serif;line-height:1">Br</div></div><div style="border:3px solid #e8fbe8;border-radius:6px;padding:4px 8px;text-align:left;color:#e8fbe8;background:#13803a"><div style="font-size:10px">56</div><div style="font:900 30px sans-serif;line-height:1">Ba</div></div></div>
+<div class="lg" style="font-size:19px;color:#e8fbe8;margin-top:10px;font-family:Impact,sans-serif">BREAKING BAD</div>`,
+backrooms:`<div style="position:absolute;inset:0;background:repeating-linear-gradient(90deg,#d8c85a 0 14px,#c4b246 14px 28px);opacity:.55"></div>
+<div style="position:relative;font:700 13px monospace;letter-spacing:3px;color:#2b2503">THE</div>
+<div style="position:relative;font:900 22px monospace;letter-spacing:2px;color:#1d1802;background:#e9db75;padding:4px 8px;border:2px solid #1d1802">BACKROOMS</div>
+<div style="position:relative;font:11px monospace;color:#2b2503;margin-top:8px">▶ REC 00:00:00</div>`,
+ava:`<div style="position:absolute;inset:0;background:#f4f6fb"></div><svg viewBox="0 0 100 100" style="position:relative"><g transform="rotate(35 50 50)"><rect x="42" y="10" width="16" height="60" rx="2" fill="#ffb300"/><rect x="42" y="10" width="16" height="10" fill="#e0457b"/><polygon points="42,70 58,70 50,90" fill="#f1d3a8"/><polygon points="46,82 54,82 50,90" fill="#333"/></g><path d="M12 88Q30 70 45 86T80 80" stroke="#2f6bff" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+<div style="position:relative;font:900 12px sans-serif;color:#1b2a55;line-height:1.1">ANIMATION<br>vs. ANIMATOR</div>`
+};
+const jw=q=>'https://www.justwatch.com/ru/поиск?q='+encodeURIComponent(q);
+const kp=q=>'https://www.kinopoisk.ru/index.php?kp_query='+encodeURIComponent(q);
+const WHERE={
+dexter:[['JustWatch — где легально смотреть',jw('Dexter')],['Кинопоиск — онлайн-кинотеатры',kp('Декстер')],['Paramount+ / Showtime','https://www.paramountplus.com/shows/dexter/'],['Wikipedia','https://ru.wikipedia.org/wiki/Декстер_(телесериал)']],
+bb:[['JustWatch — где легально смотреть',jw('Breaking Bad')],['Кинопоиск — онлайн-кинотеатры',kp('Во все тяжкие')],['Netflix','https://www.netflix.com/title/70143836'],['Wikipedia','https://ru.wikipedia.org/wiki/Во_все_тяжкие']],
+backrooms:[['Канал Kane Pixels (YouTube)','https://m.youtube.com/@KanePixels/videos'],['Плейлисты канала','https://m.youtube.com/@KanePixels/playlists'],['Wikipedia','https://ru.wikipedia.org/wiki/Закулисье_(интернет-мем)']],
+ava:[['Канал Alan Becker (YouTube)','https://m.youtube.com/@AlanBecker/videos'],['Плейлисты канала','https://m.youtube.com/@AlanBecker/playlists'],['Wikipedia','https://ru.wikipedia.org/wiki/Animator_vs._Animation']]
+};
 const $=s=>document.querySelector(s);
 const own=JSON.parse(localStorage.getItem('own')||'{}');
 const save=()=>localStorage.setItem('own',JSON.stringify(own));
 function home(f=''){
   $('#view').style.display='none';$('#list').style.display='grid';$('header').style.display='block';
   $('#list').innerHTML=SHOWS.filter(s=>(s.title+s.sub).toLowerCase().includes(f.toLowerCase())).map(s=>
-   `<div class="card" onclick="openShow('${s.id}')"><div class="poster" style="background:${s.g}">${s.title}</div>
+   `<div class="card" onclick="openShow('${s.id}')"><div class="poster" style="background:${s.g}">${ART[s.id]}</div>
     <div class="meta"><b>${s.title}</b>${s.sub}</div></div>`).join('');
 }
 function openShow(id){
@@ -73,6 +100,7 @@ function openShow(id){
   const v=$('#view');v.style.display='block';
   v.innerHTML=`<button class="back" onclick="home()">← Назад</button>
   <div class="hero" style="background:${s.g}"><h2>${s.title}</h2><p>${s.desc}</p></div>
+  <h3>Где посмотреть</h3><div class="where">${WHERE[id].map(w=>`<a href="${w[1]}">${w[0]}</a>`).join('')}</div>
   ${s.legal?`<div class="note">Этот сериал защищён авторским правом, бесплатного официального источника на YouTube нет.
   Кнопка «Трейлер» ищет официальные трейлеры; полные серии добавьте через «Моя ссылка» — вставьте адрес
   из вашей легальной подписки (Max, Paramount+, Netflix и т. п.).</div>`:''}
