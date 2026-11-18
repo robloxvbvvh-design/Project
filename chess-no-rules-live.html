@@ -46,24 +46,10 @@ button.ghost{background:var(--panel2);color:var(--fg)}
 #log .you{color:var(--you)}#log .cpu{color:var(--cpu)}#log .sys{color:var(--mute)}
 #ov{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
 #banner{z-index:4}
-#stage{display:flex;align-items:center;gap:10px}
-#cl{width:76px;height:76px;flex:none;overflow:visible;animation:bob 2.4s ease-in-out infinite}
-#cl.think{animation:think 1s ease-in-out infinite}
-#cl.cast{animation:cast .65s ease-in-out}
-#cl.rage{animation:rage .12s linear infinite}
-#cl .body{fill:#d9774f}
-#cl.rage .body{fill:#e02a1a}
-#cl .eye{transform-box:fill-box;transform-origin:center;animation:blink 4s infinite}
-#cl .m-open{display:none}
-#cl.rage .m-open,#cl.cast .m-open{display:inline}
-#cl.rage .m-smile,#cl.cast .m-smile{display:none}
-#say{flex:1;min-width:0;background:var(--panel2);border-radius:14px 14px 14px 2px;padding:10px 12px;font-size:14px;min-height:46px;overflow-wrap:anywhere}
-@keyframes bob{50%{transform:translateY(-5px)}}
-@keyframes think{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg) translateY(-3px)}}
-@keyframes cast{0%{transform:scale(1)}30%{transform:scale(1.3) rotate(-10deg)}60%{transform:scale(1.2) rotate(360deg)}100%{transform:scale(1) rotate(360deg)}}
-@keyframes rage{0%{transform:translate(-3px,1px) scale(1.25)}50%{transform:translate(3px,-2px) scale(1.25)}100%{transform:translate(-3px,1px) scale(1.25)}}
-@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
-@media (prefers-reduced-motion:reduce){#cl,#cl .eye{animation:none!important}}
+#bot{display:flex;gap:10px;align-items:flex-start;background:var(--panel2);border-radius:10px;padding:10px 12px;font-size:14px;min-height:46px}
+#bot b{flex:none;color:var(--accent)}
+#say{min-width:0;overflow-wrap:anywhere}
+.hint{font-size:12px;color:var(--mute)}
 </style>
 <div class="wrap" id="hud">
  <div>Ход<b id="turn">1</b></div>
@@ -72,35 +58,27 @@ button.ghost{background:var(--panel2);color:var(--fg)}
  <div>Мир<b class="small" id="world">Шахматы</b></div>
 </div>
 <div class="wrap" id="goal"></div>
-<div class="wrap" id="stage">
- <svg id="cl" class="idle" viewBox="0 0 100 100" role="img" aria-label="Клауд">
-  <g class="body"><ellipse cx="50" cy="56" rx="8" ry="40"/><ellipse cx="50" cy="56" rx="8" ry="40" transform="rotate(45 50 56)"/><ellipse cx="50" cy="56" rx="8" ry="40" transform="rotate(90 50 56)"/><ellipse cx="50" cy="56" rx="8" ry="40" transform="rotate(135 50 56)"/><circle cx="50" cy="56" r="27"/></g>
-  <polygon points="30,40 50,3 70,40" fill="#5b4bd8"/><circle cx="50" cy="7" r="4" fill="#ffcf4a"/>
-  <ellipse class="eye" cx="41" cy="56" rx="4" ry="6" fill="#1a1a1a"/><ellipse class="eye" cx="59" cy="56" rx="4" ry="6" fill="#1a1a1a"/>
-  <path class="m-smile" d="M40 68 Q50 77 60 68" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <ellipse class="m-open" cx="50" cy="71" rx="7" ry="6" fill="#1a1a1a"/>
- </svg>
- <div id="say"></div>
-</div>
+<div class="wrap" id="bot"><b>🤖 Клауд-бот</b><span id="say"></span></div>
 <div class="wrap" id="bw"><div id="board"></div><div id="ov"></div><div id="banner"></div></div>
 <div class="wrap" id="status"></div>
 <div class="wrap" id="bar">
- <input id="in" autocomplete="off" placeholder="Особый ход: построй дом, бомба, покакать, дракон…">
+ <input id="in" autocomplete="off" placeholder="Любой запрос для бота: построй замок, устрой дождь из котов…">
  <button id="go">Ход</button><button id="stop" class="ghost" hidden>Стоп</button>
 </div>
 <div class="wrap" id="opts">
  <label><input type="checkbox" id="chaos"> Хаос: компьютер тоже творит что угодно (через Claude)</label>
  <button id="newg" class="ghost" style="padding:6px 12px">Новая игра</button>
 </div>
+<div class="wrap hint">Пресеты (работают без Claude, лимит не тратят):</div>
 <div class="wrap" id="chips"></div>
 <div class="wrap" id="log"></div>
-<div class="wrap" style="font-size:12px;color:var(--mute)">Обычный ход: нажмите свою фигуру — зелёным подсветятся клетки, куда можно пойти (шах, мат, рокировка, взятие на проходе работают). Особый ход: напишите любой запрос, он тоже тратит ваш ход. Победа — мат или взятие чёрного короля. Запросы выполняет Claude и расходует ваш лимит Claude; без доступа к Claude работают простые команды.</div>
+<div class="wrap" style="font-size:12px;color:var(--mute)">Обычный ход: нажмите свою фигуру — зелёным подсветятся клетки, куда можно пойти (шах, мат, рокировка, взятие на проходе работают). Особый ход: напишите любой запрос, бот Клауд сам его прочитает, нарисует для него анимацию кадрами и выполнит. Это тоже тратит ваш ход. Победа — мат или взятие чёрного короля. Запросы выполняет Claude и расходует ваш лимит Claude; без доступа к Claude работают простые команды.</div>
 <script>
 const GL={K:'♚',Q:'♛',R:'♜',B:'♝',N:'♞',P:'♟'};
 const VAL={K:10,Q:9,R:5,B:3,N:3,P:1};
 const EV={P:100,N:320,B:330,R:500,Q:900,K:0};
 const GOALS=['Поставьте чёрному королю мат','Постройте дом и спрячьте в нём короля','Разбомбите всё ядерной бомбой','Призовите существо на свою сторону','Закидайте врага 💩','Уничтожьте королеву врага','Телепортируйтесь в Minecraft','Придумайте свой запрос — всё разрешено'];
-const IDEAS=['построй дом','ядерная бомба','покакать','призови дракона','уничтожь королеву','возроди фигуры','Minecraft','построй стену перед королём'];
+const PRESETS=[['🏠 дом','построй дом'],['☢️ бомба','ядерная бомба'],['💩 покакать','покакать'],['🐉 дракон','призови дракона'],['☄️ уничтожить мир','уничтожить мир'],['⚡ молния','молния'],['🌊 потоп','потоп'],['🎆 салют','салют'],['🟩 Minecraft','Minecraft'],['👑 королева','уничтожь королеву'],['✨ возрождение','возроди фигуры']];
 const NN=[[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]];
 const KS=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
 const $=id=>document.getElementById(id);
@@ -191,27 +169,19 @@ function engineMove(bd,s,ep){
  return best}
 
 /* ================= Клауд: персонаж, ритуалы, эффекты ================= */
-const Q={me:['Смелый ход!','Хм, любопытно…','Записываю в летопись.','Ты уверен? Ладно.','О, у кого-то есть план.'],
- cap:['Хрусть! Минус фигура.','Взятие! Я аж подпрыгнул.','Жестоко. Мне нравится.'],
- cpu:['Чёрные тоже не лыком шиты.','Ого, а он умеет.','Тик-так, тик-так…','Компьютер ходит. Я просто болею.'],
- cpucap:['Ай! Это было больно.','Фигура ушла в историю.','Компьютер кусается!'],
- check:['ШАХ! Держись за короля!','Королю пора бежать.'],
- idle:['Я здесь. Могу уничтожить мир, только скажи.','Напиши «построй дом», я построю.','Скучно. Может, метеорит?','Не молчи, я сам не умею молчать.']};
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 let talkT=null;
-function setMood(m){$('cl').setAttribute('class',m||'idle')}
 function talk(t){
  const el=$('say');clearInterval(talkT);t=String(t||'').slice(0,180);
  if(RM){el.textContent=t;return}
  el.textContent='';let i=0;talkT=setInterval(()=>{el.textContent=t.slice(0,++i);if(i>=t.length)clearInterval(talkT)},22)}
-function quip(k){talk(pick(Q[k]||Q.me))}
 const sleep=ms=>new Promise(r=>setTimeout(r,RM?0:ms));
 function mk(txt,css){const s=document.createElement('span');s.textContent=txt;s.style.cssText='position:absolute;display:block;pointer-events:none;'+(css||'');$('ov').appendChild(s);return s}
 const gone=a=>{a.onfinish=()=>a.effect&&a.effect.target&&a.effect.target.remove()};
 function cellPos(i){return{x:(i%8)*12.5+6.25,y:(i>>3)*12.5+6.25}}
 async function ritual(target){
  if(RM)return;
- setMood('cast');
+ 
  const kind=Math.floor(Math.random()*5);
  if(kind===0){const s=mk('','top:0;bottom:0;left:0;width:22%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent)');gone(s.animate([{transform:'translateX(-100%)'},{transform:'translateX(460%)'}],{duration:650,easing:'ease-in-out'}))}
  else if(kind===1){for(let k=0;k<16;k++){const s=mk(pick(['✨','⭐','💫','🌟']),`left:${Math.random()*92}%;top:${Math.random()*90}%;font-size:${18+Math.random()*22}px`);gone(s.animate([{transform:'translateY(20px) scale(0)',opacity:0},{transform:'translateY(-30px) scale(1.2) rotate(120deg)',opacity:1,offset:.5},{transform:'translateY(-80px) scale(.2) rotate(300deg)',opacity:0}],{duration:650,delay:Math.random()*150}))}}
@@ -219,7 +189,7 @@ async function ritual(target){
  else if(kind===3){const s=mk('⚡','left:50%;top:50%;font-size:min(60vw,320px);line-height:1;margin:-.5em 0 0 -.5em');gone(s.animate([{opacity:0,transform:'scale(.4)'},{opacity:1,transform:'scale(1)',offset:.3},{opacity:0,transform:'scale(1.3)'}],{duration:600}));
   const f=mk('','inset:0;background:#fff');gone(f.animate([{opacity:.7},{opacity:0}],{duration:350,delay:120}))}
  else{const s=mk('🔯','left:50%;top:50%;font-size:min(70vw,380px);line-height:1;margin:-.5em 0 0 -.5em');gone(s.animate([{opacity:0,transform:'scale(.2) rotate(0deg)'},{opacity:.85,transform:'scale(1) rotate(180deg)',offset:.6},{opacity:0,transform:'scale(1.2) rotate(360deg)'}],{duration:700}))}
- await sleep(650);setMood('idle')}
+ await sleep(650);}
 async function playEffect(name){
  if(RM)return;
  const bd=$('board');
@@ -227,19 +197,41 @@ async function playEffect(name){
  const shake=(a,d)=>bd.animate(Array.from({length:14},(_,i)=>({transform:`translate(${i%2?a:-a}px,${(i%3-1)*a/2}px) rotate(${(i%2?1:-1)*a/10}deg)`})).concat([{transform:'none'}]),{duration:d});
  const rain=(txt,n,dur,size)=>{for(let k=0;k<n;k++){const s=mk(txt,`left:${Math.random()*95}%;top:-15%;font-size:${size}px;line-height:1`);gone(s.animate([{transform:'translateY(0) rotate(0deg)'},{transform:`translateY(${650+Math.random()*150}%) rotate(${Math.random()*200}deg)`}],{duration:dur*(.7+Math.random()*.6),delay:Math.random()*dur*.6,easing:'ease-in'}))}};
  if(name==='apocalypse'){
-  setMood('rage');talk('ПРОЩАЙ, МИР!!!');
+  talk('ПРОЩАЙ, МИР!!!');
   flash('#ff2a00',4,1600);shake(14,1700);rain('☄️',16,1500,44);
   for(let k=0;k<14;k++){const s=mk('🔥',`left:${k*7.5}%;bottom:-8%;font-size:48px;line-height:1`);gone(s.animate([{transform:'translateY(0) scale(.5)',opacity:0},{transform:'translateY(-90px) scale(1.3)',opacity:1,offset:.5},{transform:'translateY(-200px) scale(.6)',opacity:0}],{duration:1500,delay:600+Math.random()*500}))}
   bd.querySelectorAll('.sq span').forEach(sp=>{sp.animate([{transform:'none',opacity:1},{transform:`translate(${(Math.random()-.5)*600}%,${-200-Math.random()*500}%) rotate(${(Math.random()-.5)*1440}deg) scale(${Math.random()*2})`,opacity:0}],{duration:1400,delay:700+Math.random()*400,easing:'cubic-bezier(.2,.7,.4,1)',fill:'forwards'})});
   bd.animate([{filter:'none'},{filter:'sepia(1) saturate(6) hue-rotate(-30deg)',offset:.5},{filter:'grayscale(1) brightness(.4)'}],{duration:2000,fill:'forwards'});
-  await sleep(2100);bd.getAnimations().forEach(a=>a.cancel());setMood('idle');return}
- setMood('cast');
+  await sleep(2100);bd.getAnimations().forEach(a=>a.cancel());return}
+ 
  if(name==='meteor'){rain('☄️',6,900,40);shake(8,1000);await sleep(1000)}
  else if(name==='lightning'){flash('#fff',3,700);const s=mk('⚡','left:50%;top:50%;font-size:min(80vw,420px);line-height:1;margin:-.5em 0 0 -.5em');gone(s.animate([{opacity:0},{opacity:1,offset:.2},{opacity:0}],{duration:700}));shake(6,500);await sleep(750)}
  else if(name==='flood'){const s=mk('🌊','left:0;right:0;bottom:0;height:100%;background:linear-gradient(transparent,#1e6fff99 30%,#1e6fffcc);font-size:60px;text-align:center');gone(s.animate([{transform:'translateY(100%)'},{transform:'translateY(0)',offset:.5},{transform:'translateY(100%)'}],{duration:1500,easing:'ease-in-out'}));await sleep(1500)}
  else if(name==='quake'){shake(18,1400);await sleep(1400)}
  else if(name==='freeze'){flash('#8fdcff',2,900);rain('❄️',24,1200,28);await sleep(1300)}
- setMood('idle')}
+ }
+async function playAnim(a){
+ if(RM||!a||typeof a!=='object')return;
+ const num=(v,d,lo,hi)=>{v=+v;return isFinite(v)?Math.max(lo,Math.min(hi,v)):d};
+ const okc=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
+ const dur=num(a.duration,1800,800,4500),bd=$('board');
+ (Array.isArray(a.tracks)?a.tracks:[]).slice(0,30).forEach(tr=>{
+  if(!tr||typeof tr.e!=='string')return;
+  const e=[...tr.e].slice(0,2).join('');if(!e)return;
+  const ks=(Array.isArray(tr.keys)?tr.keys:[]).slice(0,12).filter(k=>k&&typeof k==='object').map(k=>({t:num(k.t,0,0,1),x:num(k.x,50,-60,160),y:num(k.y,50,-60,160),s:num(k.s,40,8,320),r:num(k.r,0,-3600,3600),o:num(k.o,1,0,1)})).sort((p,q)=>p.t-q.t);
+  if(ks.length<2)return;
+  ks[0].t=0;ks[ks.length-1].t=1;
+  const sp=mk(e,'left:0;top:0;line-height:1');
+  gone(sp.animate(ks.map(k=>({offset:k.t,left:k.x+'%',top:k.y+'%',fontSize:k.s+'px',transform:`translate(-50%,-50%) rotate(${k.r}deg)`,opacity:k.o})),{duration:dur,easing:'ease-in-out',fill:'both'}))});
+ if(okc(a.bg)){const f=mk('','inset:0;background:'+a.bg);gone(f.animate([{opacity:0},{opacity:.4,offset:.3},{opacity:.4,offset:.7},{opacity:0}],{duration:dur,fill:'both'}))}
+ (Array.isArray(a.flashes)?a.flashes:[]).slice(0,8).forEach(f=>{
+  const c=okc(f&&f.c)?f.c:'#ffffff',d=mk('','inset:0;background:'+c);
+  gone(d.animate([{opacity:0},{opacity:.7,offset:.2},{opacity:0}],{duration:380,delay:num(f&&f.t,0,0,1)*dur,fill:'both'}))});
+ const sh=num(a.shake,0,0,24);
+ if(sh)bd.animate(Array.from({length:16},(_,i)=>({transform:`translate(${i%2?sh:-sh}px,${(i%3-1)*sh/2}px)`})).concat([{transform:'none'}]),{duration:dur});
+ await sleep(dur)}
+function fall(e,n,x0,x1,yEnd,size){const tr=[];for(let k=0;k<n;k++){const x=x0+Math.random()*(x1-x0),t=k/n*.55;tr.push({e,keys:[{t:0,x,y:-15,s:size,o:0},{t,x,y:-15,s:size,o:0},{t:t+.3,x,y:yEnd-Math.random()*20,s:size,r:Math.random()*60-30,o:1},{t:1,x,y:yEnd,s:size,o:1}]})}return tr}
+function fireworksAnim(){const tr=[];for(let k=0;k<7;k++){const x=15+Math.random()*70,y=15+Math.random()*50,t=.15+Math.random()*.4;tr.push({e:pick(['🎆','🎇','✨']),keys:[{t:0,x,y:110,s:20,o:0},{t,x,y:110,s:20,o:1},{t:t+.25,x,y,s:100,r:90,o:1},{t:1,x,y:y+8,s:160,r:200,o:0}]})}return{duration:2400,tracks:tr,flashes:[{t:.5,c:'#ffffff'}]}}
 async function runOps(ops,actor){
  const list=Array.isArray(ops)?ops:[];
  for(const o of list)if(o&&o.op==='effect')await playEffect(String(o.name||''));
@@ -283,7 +275,7 @@ function draw(){
 function setBusy(v,msg){busy=v;$('go').disabled=v;$('in').disabled=v;$('stop').hidden=!v||!ctl;$('status').textContent=msg||''}
 function banner(t){const e=$('banner');e.textContent=t;e.classList.remove('on');void e.offsetWidth;e.classList.add('on')}
 function finish(m,bn){over=true;busy=false;sel=null;$('stop').hidden=true;$('go').disabled=true;$('in').disabled=true;
- log('🏁 '+m,'sys');talk(m);setMood(bn==='Мат!'||bn==='Победа!'?'cast':'idle');$('status').textContent=m+' Нажмите «Новая игра».';if(bn)banner(bn);draw()}
+ log('🏁 '+m,'sys');talk(m);$('status').textContent=m+' Нажмите «Новая игра».';if(bn)banner(bn);draw()}
 function afterAction(actor){
  const o=opp(actor);
  if(!hasK('k')){finish('Вы победили: чёрный король пал!','Победа!');return true}
@@ -307,19 +299,19 @@ function click(i){
  const L=legal(b,'w',ep);
  if(sel!==null){
   const m=L.find(x=>x.f===sel&&x.t===i);
-  if(m){sel=null;busy=true;draw();ritual(m.t).then(()=>{doMove(m,'w');quip(m.cap?'cap':'me');draw();busy=false;playerDone()});return}}
+  if(m){sel=null;busy=true;draw();ritual(m.t).then(()=>{doMove(m,'w');draw();busy=false;playerDone()});return}}
  sel=(b[i]&&b[i].s==='w'&&i!==sel)?i:null;draw()}
 function playerDone(){
  if(afterAction('w'))return;
  if($('chaos').checked&&sample)ask('Игрок сделал обычный шахматный ход.',true);else cpuEngine()}
 function cpuEngine(){
  setBusy(true,'Компьютер думает…');
- setMood('think');
+ 
  setTimeout(async()=>{
   const m=engineMove(b,'k',ep);
-  if(m){await ritual(m.t);doMove(m,'k');quip(m.cap?'cpucap':'cpu')}
-  turn++;draw();setBusy(false,'');setMood('idle');
-  if(!afterAction('k')&&inCheck(b,'w'))quip('check')},380)}
+  if(m){await ritual(m.t);doMove(m,'k');}
+  turn++;draw();setBusy(false,'');
+  afterAction('k')},380)}
 
 /* ================= особые ходы ================= */
 function cell(o){
@@ -348,18 +340,18 @@ function apply(ops,actor){
 const BOARD_HINT=`Ты движок особых ходов игры «Шахматы без правил» на доске 8x8. Координаты: x 0..7 слева направо, y 0..7 сверху вниз. Белые (s="w") — игрок, они внизу (y=6,7). Чёрные (s="k") — компьютер, вверху. Клетка: e (эмодзи/символ), s ("w", "k" или null для предметов и построек), t (тип: K,Q,R,B,N,P для шахматных фигур; для всего остального любая короткая строка, например "block", "fx", "X"). Король — t="K". Предметы (s=null) блокируют фигуры, любая фигура может их разрушить, встав на клетку. Существа (s="w" или "k", t="X") ходят как король.
 Особый ход выполняется буквально и творчески. «Построй дом» — выстрой дом из клеток (fill/set: 🟥 крыша, 🧱 стены, 🪟 окна, 🚪 дверь, s=null, t="block") на свободном месте у стороны игрока. Бомба — очисти область (clearArea) и поставь 💥 или ☢️ (s=null, t="fx"). «Покакать» — поставь 💩 (s=null, t="block") на клетки перед фигурами врага или рядом с его королём, чтобы заблокировать их. Существа (дракон, робот, зомби) — set с эмодзи, s сторона призвавшего, t="X". Minecraft — theme (l зелёный, d коричневый, world "Minecraft") и блоки 🟩🟫🪵. Королей убивать можно. Остальное придумай сам.
 Операции: {"op":"set","x":0,"y":0,"e":"🧱","s":null,"t":"block"}, {"op":"clear","x":0,"y":0}, {"op":"fill","x":0,"y":0,"w":3,"h":2,"e":"🧱","s":null,"t":"block"}, {"op":"clearArea","x":0,"y":0,"w":3,"h":3}, {"op":"theme","l":"#7cbd4a","d":"#866043","world":"Minecraft"}. Не больше 60 операций.
-Эффекты: {"op":"effect","name":"apocalypse|meteor|lightning|flood|quake|freeze"} — зрелищная анимация, ставь её первой в списке, остальные операции выполнятся после неё. «Уничтожить мир» = effect apocalypse, затем clearArea x0 y0 w8 h8, затем верни обоих королей через set (щади королей), затем theme пепла (l "#4a3a3a", d "#241616", world "Пепел"). Метеорит = effect meteor и clear нескольких клеток. Молния = effect lightning и clear одной фигуры. Потоп = flood, землетрясение = quake, заморозка = freeze. Ты персонаж по имени Клауд, поле say — твоя живая реплика с характером, одна-две короткие фразы.`;
+Эффекты: {"op":"effect","name":"apocalypse|meteor|lightning|flood|quake|freeze"} — зрелищная анимация, ставь её первой в списке, остальные операции выполнятся после неё. «Уничтожить мир» = effect apocalypse, затем clearArea x0 y0 w8 h8, затем верни обоих королей через set (щади королей), затем theme пепла (l "#4a3a3a", d "#241616", world "Пепел"). Метеорит = effect meteor и clear нескольких клеток. Молния = effect lightning и clear одной фигуры. Потоп = flood, землетрясение = quake, заморозка = freeze. Ты бот Клауд внутри игры: сам читаешь любой запрос игрока и сам его выполняешь. Для КАЖДОГО особого хода создай анимацию кадрами в поле anim, а потом задай ops (итог на доске). Формат anim: {"duration":2000,"bg":"#1a0000","shake":10,"tracks":[{"e":"🏠","keys":[{"t":0,"x":50,"y":-20,"s":60,"r":0,"o":0},{"t":0.5,"x":50,"y":50,"s":140,"r":0,"o":1},{"t":1,"x":50,"y":50,"s":140,"r":360,"o":0}]}],"flashes":[{"t":0.5,"c":"#ffffff"}]}. duration в мс (800..4500). Трек — один спрайт-эмодзи e, keys — его кадры: t 0..1 (время), x и y в процентах доски (0..100, можно за краем), s размер в px (10..320), r поворот в градусах, o прозрачность 0..1; между кадрами движение плавное. 4-14 треков по 2-8 кадров, bg необязателен (hex), shake 0..20 — тряска доски, flashes — вспышки в момент t. Сочиняй зрелищно и по смыслу запроса: для дома стройматериалы падают и складываются, для бомбы ракета летит вниз и вспыхивает, для дракона он пролетает и дышит огнём. Поле say — твоя реплика, одна-две короткие фразы.`;
 function boardJson(){return JSON.stringify(b.map((p,i)=>p?{x:i%8,y:i>>3,e:glyph(p),s:p.s,t:p.t}:null).filter(Boolean))}
-async function ask(req,manual){
- const myTurn=turn,chaos=$('chaos').checked&&!!sample;
- setBusy(true,'Клауд читает запрос…');setMood('think');
+async function ask(req,manual,force){
+ const myTurn=turn,chaos=$('chaos').checked&&!!sample&&!force;
+ setBusy(true,'Клауд читает запрос…');
  if(!manual)talk('Читаю запрос: «'+String(req).slice(0,60)+'»…');
  let res=null;
- if(sample){
+ if(sample&&!force){
   ctl=new AbortController();$('stop').hidden=false;
   const fmt=chaos
-   ?'Ответ — только JSON: {"say":"короткая реплика","ops":[...],"cpu_say":"что сделал компьютер","cpu_ops":[...]}. cpu_ops — ответный ход компьютера: он тоже может делать что угодно (двигать фигуры через clear+set, взрывать, строить, призывать, брать фигуры игрока), изобретательно, с характером. Если игрок уже взял чёрного короля, cpu_ops пусты. Игрока нельзя лишать короля в первые 3 хода.'
-   :'Ответ — только JSON: {"say":"короткая реплика","ops":[...]}. Ходы компьютера не нужны.';
+   ?'Ответ — только JSON: {"say":"короткая реплика","anim":{...},"ops":[...],"cpu_say":"что сделал компьютер","cpu_ops":[...]}. cpu_ops — ответный ход компьютера: он тоже может делать что угодно (двигать фигуры через clear+set, взрывать, строить, призывать, брать фигуры игрока), изобретательно, с характером. Если игрок уже взял чёрного короля, cpu_ops пусты. Игрока нельзя лишать короля в первые 3 хода.'
+   :'Ответ — только JSON: {"say":"короткая реплика","anim":{...},"ops":[...]}. Ходы компьютера не нужны.';
   const hint=manual?'Ходит компьютер, игрок уже сделал обычный ход. ops оставь пустым.':'Запрос игрока: '+req;
   try{res=await sample.json(BOARD_HINT+'\n'+fmt+'\n\nХод №'+turn+'. Доска:\n'+boardJson()+'\n\n'+hint,{modelTier:'quick',signal:ctl.signal,cache:false})}
   catch(e){
@@ -370,9 +362,10 @@ async function ask(req,manual){
   ctl=null;
  }
  if(!res||typeof res!=='object'||Array.isArray(res))res=manual?{ops:[]}:local(req);
- setMood('idle');
+ 
+ $('status').textContent='Клауд рисует и выполняет…';$('stop').hidden=true;
  if(res.say){log('Клауд: '+res.say,'you');talk(res.say)}
- if(!manual&&Array.isArray(res.ops)){await ritual(null);await runOps(res.ops,'w')}
+ if(!manual&&(Array.isArray(res.ops)||res.anim)){if(res.anim)await playAnim(res.anim);else await ritual(null);await runOps(res.ops,'w')}
  draw();
  if(afterAction('w'))return;
  if(chaos&&Array.isArray(res.cpu_ops)&&res.cpu_ops.length){
@@ -384,27 +377,33 @@ async function ask(req,manual){
 function find(t,s){return b.findIndex(p=>p&&p.t===t&&p.s===s)}
 function local(t){
  t=t.toLowerCase();const ops=[];let say='';
- const kw=find('K','k');
- if(/мир|апокалипс|конец света/.test(t)&&/уничтож|разруш|взорв|разнес|конец|апокалипс/.test(t)){
+ const kw=find('K','k');let anim=null;
+ if(/салют|фейерверк/.test(t)){anim=fireworksAnim();say='🎆 Салют в вашу честь'}
+ else if(/дракон/.test(t)){
+  const e=b.map((p,i)=>p?-1:i).filter(i=>i>=40);const i=e.length?e[Math.floor(Math.random()*e.length)]:-1;
+  if(i>=0)ops.push({op:'set',x:i%8,y:i>>3,e:'🐉',s:'w',t:'X'});
+  anim={duration:2200,shake:6,tracks:[{e:'🐉',keys:[{t:0,x:-20,y:70,s:90},{t:.5,x:50,y:35,s:220,r:-10},{t:1,x:120,y:15,s:90,r:-20,o:0}]},{e:'🔥',keys:[{t:0,x:-10,y:70,s:20,o:0},{t:.45,x:50,y:50,s:20,o:0},{t:.6,x:75,y:55,s:150,o:1},{t:1,x:100,y:60,s:200,o:0}]}],flashes:[{t:.6,c:'#ff8a00'}]};
+  say='🐉 Дракон на вашей стороне'}
+ else if(/мир|апокалипс|конец света/.test(t)&&/уничтож|разруш|взорв|разнес|конец|апокалипс/.test(t)){
   ops.push({op:'effect',name:'apocalypse'},{op:'clearArea',x:0,y:0,w:8,h:8});
   ['w','k'].forEach(s=>{const k=find('K',s);if(k>=0)ops.push({op:'set',x:k%8,y:k>>3,s,t:'K'})});
   ops.push({op:'theme',l:'#4a3a3a',d:'#241616',world:'Пепел'});say='☄️ Мир уничтожен. Я пощадил только королей.'}
  else if(/метеор|молни|потоп|землетр|заморо/.test(t)){
   const n=/метеор/.test(t)?'meteor':/молни/.test(t)?'lightning':/потоп/.test(t)?'flood':/землетр/.test(t)?'quake':'freeze';
   ops.push({op:'effect',name:n});say='Эффект: '+n}
- else if(/бомб|ядер|взрыв/.test(t)){const c=kw>=0?kw:27;ops.push({op:'clearArea',x:(c%8)-2,y:(c>>3)-2,w:5,h:5},{op:'set',x:c%8,y:c>>3,e:'☢️',s:null,t:'fx'});say='☢️ Ядерный взрыв вокруг чёрного короля'}
+ else if(/бомб|ядер|взрыв/.test(t)){const c=kw>=0?kw:27;ops.push({op:'clearArea',x:(c%8)-2,y:(c>>3)-2,w:5,h:5},{op:'set',x:c%8,y:c>>3,e:'☢️',s:null,t:'fx'});say='☢️ Ядерный взрыв вокруг чёрного короля';const cx=(c%8)*12.5+6.25,cy=(c>>3)*12.5+6.25;anim={duration:2000,shake:16,tracks:[{e:'🚀',keys:[{t:0,x:cx,y:-15,s:60,r:180},{t:.5,x:cx,y:cy,s:60,r:180},{t:.52,x:cx,y:cy,s:60,r:180,o:0},{t:1,x:cx,y:cy,s:60,o:0}]},{e:'💥',keys:[{t:0,x:cx,y:cy,s:20,o:0},{t:.5,x:cx,y:cy,s:20,o:0},{t:.62,x:cx,y:cy,s:320,o:1},{t:1,x:cx,y:cy,s:360,r:30,o:0}]}],flashes:[{t:.5,c:'#ffffff'}]}}
  else if(/покак|какаш|💩|туалет|навал/.test(t)){
   const e=b.map((p,i)=>p?-1:i).filter(i=>i>=0&&i<32);
   for(let k=0;k<4&&e.length;k++){const i=e.splice(Math.floor(Math.random()*e.length),1)[0];ops.push({op:'set',x:i%8,y:i>>3,e:'💩',s:null,t:'block'})}
-  say='💩 Враг завален ... неприятностями'}
+  say='💩 Враг завален ... неприятностями';anim={duration:2000,tracks:fall('💩',14,5,95,85,40)}}
  else if(/дом|постро|строй/.test(t)){
   for(let j=0;j<3;j++)for(let i=0;i<4;i++)ops.push({op:'set',x:2+i,y:4+j,e:j===0?'🟥':(j===2&&i===1?'🚪':(i%3===0?'🧱':'🪟')),s:null,t:'block'});
-  say='🏠 Построен дом'}
+  say='🏠 Построен дом';anim={duration:2200,tracks:fall('🧱',10,25,75,60,46)}}
  else if(/королев/.test(t)){const q=find('Q','k');if(q>=0)ops.push({op:'clear',x:q%8,y:q>>3});say='Королева врага уничтожена'}
  else if(/возрод|воскре/.test(t)){const e=b.map((p,i)=>p?-1:i).filter(i=>i>=40);['Q','R','R','B','N','P'].forEach((tt,k)=>{if(e[k]!==undefined)ops.push({op:'set',x:e[k]%8,y:e[k]>>3,s:'w',t:tt})});say='✨ Фигуры возрождены'}
  else if(/minecraft|майнкрафт|майн/.test(t)){ops.push({op:'theme',l:'#7cbd4a',d:'#866043',world:'Minecraft'});say='🟩 Вы в Minecraft'}
  else say='Без Claude я понимаю: уничтожить мир, метеорит, бомба, построй дом, покакать, уничтожь королеву, возроди, Minecraft';
- return{say,ops}}
+ return{say,ops,anim}}
 
 /* ---------- интерфейс ---------- */
 function submit(){
@@ -415,15 +414,15 @@ function reset(){
  if(ctl)ctl.abort();
  init();turn=1;score={w:0,k:0};over=false;busy=false;sel=null;
  $('banner').classList.remove('on');$('go').disabled=false;$('in').disabled=false;$('stop').hidden=true;$('status').textContent='';$('log').innerHTML='';
- log('Новая игра. Белые ходят первыми.','sys');talk('Новый мир, новые беды. Ходи!');setMood('idle');draw()}
+ log('Новая игра. Белые ходят первыми.','sys');talk('Новая игра. Жду запрос.');draw()}
 $('go').onclick=submit;
 $('newg').onclick=reset;
 $('in').onkeydown=e=>{if(e.key==='Enter')submit()};
 $('stop').onclick=()=>ctl&&ctl.abort();
-IDEAS.forEach(t=>{const c=document.createElement('button');c.textContent=t;c.onclick=()=>{if(busy||over)return;$('in').value=t;$('in').focus()};$('chips').appendChild(c)});
+PRESETS.forEach(([l,t])=>{const c=document.createElement('button');c.textContent=l;c.onclick=()=>{if(busy||over)return;log('Пресет: «'+t+'»','you');ask(t,false,true)};$('chips').appendChild(c)});
 init();draw();log('Игра началась. Ходите фигурой или напишите особый ход.','sys');
-talk('Привет! Я Клауд. Ходи фигурой или пиши что угодно, хоть «уничтожить мир».');
-setInterval(()=>{if(!busy&&!over&&document.visibilityState==='visible')talk(pick(Q.idle))},25000);
+talk('Я Клауд-бот. Пиши любой запрос: сам прочитаю, нарисую для него анимацию кадрами и выполню на доске. Или жми пресет.');
+
 (async()=>{try{sample=await claude.use('sample')}catch(e){sample=null}
  if(!sample){$('status').textContent='Claude недоступен здесь: особые ходы ограничены простыми командами.';$('chaos').disabled=true}})();
 </script>
