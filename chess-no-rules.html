@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Шахматы без правил</title>
+<style>
+:root{--l:#f0d9b5;--d:#b58863;--bg:#1b1b22;--fg:#eee}
+body.mc{--l:#7cbd4a;--d:#866043;--bg:#2b2b2b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center}
+#hud{width:100%;background:#000;padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:center;font-weight:600;position:sticky;top:0;z-index:5}
+#hud span b{color:#ffd54a}
+#goal{width:100%;text-align:center;padding:6px;background:#2d2d40;font-size:14px}
+#board{display:grid;grid-template-columns:repeat(8,1fr);width:min(96vw,520px);aspect-ratio:1;margin:10px;border:4px solid #000}
+.sq{display:flex;align-items:center;justify-content:center;font-size:min(9vw,48px);cursor:pointer;user-select:none;position:relative}
+.sq.l{background:var(--l)}.sq.d{background:var(--d)}
+body.mc .sq{image-rendering:pixelated;border:1px solid rgba(0,0,0,.25)}
+.sq.sel{outline:4px solid #ffd54a;outline-offset:-4px}
+.sq.boom{animation:b .6s}
+@keyframes b{0%{background:#fff}50%{background:#ff6a00}100%{}}
+.w{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}.k{color:#111;text-shadow:0 0 2px #fff}
+body.mc .sq span{background:rgba(0,0,0,.25);padding:0 4px;border-radius:2px}
+#cmd{display:flex;gap:6px;width:min(96vw,520px)}
+#cmd input{flex:1;padding:10px;border-radius:6px;border:0;font-size:16px}
+button{padding:10px 14px;border:0;border-radius:6px;background:#ffd54a;font-weight:700;cursor:pointer}
+#log{width:min(96vw,520px);margin:10px 0 30px;font-size:14px;max-height:200px;overflow:auto;background:#0006;padding:8px;border-radius:6px}
+#log div{padding:2px 0}.you{color:#8be28b}.cpu{color:#ff9b9b}
+</style></head><body>
+<div id="hud">
+ <span>Ход: <b id="turn">1</b></span>
+ <span>Вы (белые): <b id="sw">0</b></span>
+ <span>Компьютер: <b id="sb">0</b></span>
+ <span>Режим: <b id="mode">Шахматы</b></span>
+</div>
+<div id="goal"></div>
+<div id="board"></div>
+<div id="cmd"><input id="in" placeholder="Любая команда: ядерная бомба, уничтожь королеву, возроди, minecraft…"><button id="go">Ход</button></div>
+<div style="font-size:12px;opacity:.7;margin:6px">Или кликните фигуру, затем любую клетку — правил нет. Цель: взять чёрного короля.</div>
+<div id="log"></div>
+<script>
+const G={'K':'♚','Q':'♛','R':'♜','B':'♝','N':'♞','P':'♟','C':'💥'};
+const MC={'K':'👑','Q':'🧙','R':'🏰','B':'⛏️','N':'🐴','P':'🧱','C':'🟩'};
+let b,sel=null,turn=1,sc={w:0,k:0},mc=false,over=false,lost={w:[],k:[]};
+const $=id=>document.getElementById(id);
+const goals=['Возьмите чёрного короля любым способом','Сожгите всё ядерной бомбой','Уничтожьте королеву врага','Телепортируйтесь в Minecraft','Верните павших — «возроди»','Придумайте свою команду — всё разрешено'];
+function init(){
+ b=Array(64).fill(null);const row='RNBQKBNR'.split('');
+ row.forEach((t,i)=>{b[i]={t,c:'k'};b[56+i]={t,c:'w'};b[8+i]={t:'P',c:'k'};b[48+i]={t:'P',c:'w'}});
+ lost={w:[],k:[]};
+}
+function log(m,c){const d=document.createElement('div');d.className=c;d.textContent=m;$('log').prepend(d)}
+function draw(){
+ const el=$('board');el.innerHTML='';
+ b.forEach((p,i)=>{const s=document.createElement('div');s.className='sq '+(((i>>3)+i)%2?'d':'l')+(sel===i?' sel':'');
+  if(p){const sp=document.createElement('span');sp.className=p.c;sp.textContent=(mc?MC:G)[p.t];s.appendChild(sp)}
+  s.onclick=()=>click(i);el.appendChild(s)});
+ $('turn').textContent=turn;$('sw').textContent=sc.w;$('sb').textContent=sc.k;
+ $('mode').textContent=mc?'Minecraft':'Шахматы';document.body.classList.toggle('mc',mc);
+ $('goal').textContent='Ваша цель: '+goals[(turn-1)%goals.length];
+}
+function kill(i,by){const p=b[i];if(!p)return;lost[p.c].push(p.t);b[i]=null;if(by)sc[by]+=({P:1,N:3,B:3,R:5,Q:9,K:100,C:0})[p.t];if(p.t==='K')end(p.c==='k'?'Вы победили! Король пал.':'Компьютер взял вашего короля.')}
+function end(m){over=true;log('🏁 '+m,'you');setTimeout(()=>alert(m),50)}
+function boom(i){const x=i%8,y=i>>3;document.querySelectorAll('.sq').forEach((e,j)=>{if(Math.abs(j%8-x)<=1&&Math.abs((j>>3)-y)<=1)e.classList.add('boom')})}
+function find(t,c){return b.findIndex(p=>p&&p.t===t&&p.c===c)}
+function nuke(side,by){
+ const k=find('K',side==='w'?'k':'w');const c=k>=0?k:27;const x=c%8,y=c>>3;let n=0;
+ for(let j=0;j<64;j++)if(Math.abs(j%8-x)<=2&&Math.abs((j>>3)-y)<=2&&b[j]&&!(b[j].t==='K'&&b[j].c===side)){kill(j,by);n++}
+ draw();boom(c);return '☢️ Ядерная бомба! Уничтожено фигур: '+n;
+}
+function respawn(side){
+ let n=0;const back=side==='w'?[...Array(64).keys()].filter(i=>i>=40):[...Array(64).keys()].filter(i=>i<24);
+ while(lost[side].length){const e=back.filter(i=>!b[i]);if(!e.length)break;b[e[Math.floor(Math.random()*e.length)]]={t:lost[side].pop(),c:side};n++}
+ return '✨ Возрождено фигур: '+n;
+}
+function move(a,t,side){const p=b[a];if(!p)return;if(b[t]&&b[t].c!==side)kill(t,side==='w'?'w':'k');else if(b[t])return;b[t]=p;b[a]=null}
+function click(i){
+ if(over)return;
+ if(sel===null){if(b[i]&&b[i].c==='w')sel=i}
+ else{if(i!==sel&&!(b[i]&&b[i].c==='w')){move(sel,i,'w');log('Вы: '+G[b[i].t]+' → '+'abcdefgh'[i%8]+(8-(i>>3)),'you');sel=null;draw();cpu()}else sel=(i===sel?null:i)}
+ draw();
+}
+function command(t){
+ t=t.toLowerCase();
+ if(/бомб|ядер|nuke|взрыв/.test(t))return nuke('w','w');
+ if(/королев|ферз/.test(t)){const q=find('Q','k');if(q<0)return 'Королевы врага уже нет';kill(q,'w');boom(q);return '👑💀 Королева врага уничтожена!'}
+ if(/возрод|воскре|respawn/.test(t))return respawn('w');
+ if(/minecraft|майнкрафт|майн/.test(t)){mc=!mc;return mc?'🟩 Портал открыт: вы в Minecraft!':'Возврат из Minecraft'}
+ if(/крипер|creeper/.test(t)){const e=b.map((p,i)=>p?-1:i).filter(i=>i>=0);const i=e[Math.floor(Math.random()*e.length)];b[i]={t:'C',c:'w'};setTimeout(()=>{if(b[i]&&b[i].t==='C'){b[i]=null;draw()}},1);return '🟩 Крипер появился и взорвался!'+(()=>{for(let j=0;j<64;j++)if(b[j]&&b[j].c==='k'&&Math.abs(j%8-i%8)<=1&&Math.abs((j>>3)-(i>>3))<=1)kill(j,'w');return''})()}
+ if(/король|короля|телепорт/.test(t)){const k=find('K','k');if(k>=0){const a=find('K','w');if(a>=0){kill(k,'w');move(a,k,'w')}}return '⚡ Телепорт к чёрному королю!'}
+ // любая другая команда — случайный эффект
+ const w=b.map((p,i)=>p&&p.c==='w'&&p.t!=='K'?i:-1).filter(i=>i>=0);
+ if(w.length){const i=w[Math.floor(Math.random()*w.length)];b[i].t='Q';return '🌟 «'+t+'» — одна из ваших фигур стала королевой!'}
+ return '«'+t+'» — ничего не произошло';
+}
+function cpu(){
+ if(over){draw();return}
+ setTimeout(()=>{
+  const r=Math.random();let m;
+  if(r<.15)m='Компьютер: '+nuke('k','k');
+  else if(r<.25){const q=find('Q','w');if(q>=0){kill(q,'k');m='Компьютер: 👑💀 убил вашу королеву!'}else m='Компьютер: промахнулся королевой'}
+  else if(r<.35)m='Компьютер: '+respawn('k');
+  else if(r<.4){mc=!mc;m='Компьютер: переключил мир (Minecraft)'}
+  else{const mine=b.map((p,i)=>p&&p.c==='k'?i:-1).filter(i=>i>=0);const foe=b.map((p,i)=>p&&p.c==='w'?i:-1).filter(i=>i>=0);
+   const a=mine[Math.floor(Math.random()*mine.length)];const t=Math.random()<.6&&foe.length?foe[Math.floor(Math.random()*foe.length)]:Math.floor(Math.random()*64);
+   if(b[t]&&b[t].c==='k'){m='Компьютер: пропустил ход'}else{m='Компьютер: '+(b[a]?G[b[a].t]:'')+' → '+'abcdefgh'[t%8]+(8-(t>>3));move(a,t,'k')}}
+  log(m,'cpu');turn++;draw();
+ },500);
+}
+function submit(){
+ if(over)return;const v=$('in').value.trim();if(!v)return;$('in').value='';
+ const m=command(v);log('Вы: '+m,'you');draw();cpu();
+}
+$('go').onclick=submit;$('in').onkeydown=e=>{if(e.key==='Enter')submit()};
+init();draw();log('Игра началась. Правил нет — удачи!','you');
+</script></body></html>
