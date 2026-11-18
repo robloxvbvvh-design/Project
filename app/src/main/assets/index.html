@@ -105,13 +105,15 @@ function openShow(id){
   Кнопка «Трейлер» ищет официальные трейлеры; полные серии добавьте через «Моя ссылка» — вставьте адрес
   из вашей легальной подписки (Max, Paramount+, Netflix и т. п.).</div>`:''}
   ${s.items.map((it,i)=>{const k=id+i;return `<div class="row"><div class="t">${it.t}</div>
-   <div class="btns"><button class="b" onclick="go(${JSON.stringify(YT(it.q))})">▶ ${s.legal?'Трейлер':'Смотреть'}</button>
-   ${own[k]?`<button class="b" onclick="go(${JSON.stringify(own[k])})">▶ Моя ссылка</button>`:''}
+   <div class="btns"><button class="b" onclick="goYT('${id}',${i})">▶ ${s.legal?'Трейлер':'Смотреть'}</button>
+   ${own[k]?`<button class="b" onclick="goOwn('${k}')">▶ Моя ссылка</button>`:''}
    <button class="b s" onclick="setOwn('${id}',${i})">🔗 ${own[k]?'Изменить':'Моя ссылка'}</button></div>
    ${own[k]?`<div class="own">${own[k]}</div>`:''}</div>`}).join('')}`;
   window.scrollTo(0,0);
 }
 function go(u){location.href=u}
+function goYT(id,i){go(YT(SHOWS.find(x=>x.id===id).items[i].q))}
+function goOwn(k){if(own[k])go(own[k])}
 function setOwn(id,i){
   const k=id+i,u=prompt('Вставьте ссылку (https://…). Пусто — удалить:',own[k]||'');
   if(u===null)return;
