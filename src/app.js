@@ -152,14 +152,15 @@ function drawPreview(){
   const gr=x.createLinearGradient(0,0,0,c.height);gr.addColorStop(0,gn.c[0]);gr.addColorStop(1,gn.c[1]);x.fillStyle=gr;x.fillRect(0,0,c.width,c.height);
   x.fillStyle=gn.c[2];x.fillRect(0,270,c.width,90);
   const t=performance.now()/1000;
-  if(st.comp.on)drawHero(x,205,322,1.05*ageScale(st.comp.age),0,false,st.comp,t);
-  drawHero(x,st.comp.on?100:150,320,1.15*ageScale(st.hero.age),0,false,st.hero,t);
+  if(st.comp.on)drawHero(x,205,322,1.05*ageScale(st.comp.age),0,false,st.comp,t,'idle');
+  drawHero(x,st.comp.on?100:150,320,1.15*ageScale(st.hero.age),0,false,st.hero,t,'idle');
   $('#pvName').textContent=st.hero.name+(st.comp.on?' и '+st.comp.name:'')+' · '+st.hero.prof;
 }
 
 /* ---------- 3. голос ---------- */
 let sysVoices=[];
 function loadVoices(){
+  if(NATIVE){$('#vHint').textContent='Голос читает синтезатор телефона (Android).';return}
   if(!('speechSynthesis' in window)){sysVoices=[];return}
   sysVoices=speechSynthesis.getVoices();
   const ru=sysVoices.filter(v=>/^ru/i.test(v.lang));
@@ -201,8 +202,19 @@ function pickSysVoice(wg){
 
 /* ---------- речь ---------- */
 let curUtter=null;
-function cancelSpeech(){try{if('speechSynthesis' in window)speechSynthesis.cancel()}catch(e){}curUtter=null}
+const NATIVE=!!(window.Android&&window.Android.speak);
+let ttsId=0;const ttsCb={};
+window.__tts=function(ev,id,arg){const c=ttsCb[id];if(!c)return;
+  if(ev==='start'){c.start&&c.start()}else if(ev==='range'){c.boundary&&c.boundary(arg)}else if(ev==='end'){delete ttsCb[id];c.end&&c.end()}};
+function cancelSpeech(){try{if(NATIVE)Android.stopSpeak();else if('speechSynthesis' in window)speechSynthesis.cancel()}catch(e){}curUtter=null}
 function speak(text,cb,who){
+  if(NATIVE){
+    let wg=VOICES[st.voice.preset].g,pi=st.voice.pitch,ra=st.voice.rate;
+    if(who==='H'||who==='C'){const o=who==='H'?st.hero:st.comp,k=groupOf(o.age);wg=o.gender;
+      pi=o.gender==='f'?(k==='child'?1.6:k==='teen'?1.4:1.25):(k==='child'?1.45:k==='teen'?1.2:.95);ra=k==='child'?1.08:1;if(who==='C'&&st.comp.gender===st.hero.gender)pi+=.12}
+    const id=++ttsId;ttsCb[id]=cb;try{Android.speak(id,text,pi,ra,wg)}catch(e){delete ttsCb[id];cb.nostart&&cb.nostart();return null}
+    return {native:true};
+  }
   if(!('speechSynthesis' in window)){cb.nostart&&cb.nostart();return null}
   const u=new SpeechSynthesisUtterance(text);
   let wg=null,pi=st.voice.pitch,ra=st.voice.rate;
@@ -284,28 +296,81 @@ function renderStudio(){
 
 /* ---------- рисование героя и мира ---------- */
 function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-function drawHero(x,px,py,S,walk,speaking,h,t){
-  const sw=Math.sin(walk)*26*S,bob=Math.abs(Math.sin(walk))*5*S;
+/* ---------- персонаж: руки с суставами, предмет рисуется кодом ---------- */
+function limb(x,sx,sy,a1,a2,L1,L2,w,col,skin){
+  const ex=sx+Math.sin(a1)*L1,ey=sy+Math.cos(a1)*L1,hx=ex+Math.sin(a1+a2)*L2,hy=ey+Math.cos(a1+a2)*L2;
+  x.strokeStyle=col;x.lineWidth=w;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(sx,sy);x.lineTo(ex,ey);x.lineTo(hx,hy);x.stroke();
+  x.fillStyle=skin;x.beginPath();x.arc(hx,hy,w*.62,0,7);x.fill();
+  return {x:hx,y:hy,a:a1+a2};
+}
+function armPose(act,sp,t,walk,front){
+  const ph=front?0:Math.PI;
+  if(act==='fight')return front?[1.5+.7*Math.sin(t*14),.15]:[.9-.7*Math.sin(t*14),1.6];
+  if(act==='hide')return front?[2.6,-2.2]:[2.4,-2.0];
+  if(act==='run')return [Math.sin(walk+ph)*1.0+.1,1.15];
+  if(act==='hurt'||act==='shock')return [1.3+.5*Math.sin(t*18+ph),.6+.4*Math.sin(t*13)];
+  if(act==='look')return front?[1.45,.1]:[.15,.4];
+  if(act==='meet')return front?[1.15+.15*Math.sin(t*6),.3]:[.1,.3];
+  if(act==='pick')return front?[.8+.25*Math.sin(t*4),.6]:[.2,.4];
+  if(sp&&front)return [.55+.35*Math.sin(t*3.1),1.0+.6*Math.sin(t*5.3+1)];
+  if(sp)return [.15+.1*Math.sin(t*2.2),.35];
+  if(act==='walk'||act==='pick')return [Math.sin(walk+ph)*.65,.45];
+  return [.06*Math.sin(t*1.5+ph),.2+.05*Math.sin(t*1.5)];
+}
+/* предмет в руке — векторный рисунок, а не эмодзи-стикер */
+function heldItem(x,em,hx,hy,ang,S,t){
+  x.save();x.translate(hx,hy);x.rotate(ang);const s=S;
+  const col=(c)=>{x.fillStyle=c};
+  switch(em){
+   case '🔦':col('#3a3f4a');x.fillRect(-4*s,-2*s,8*s,30*s);col('#cfd6e0');x.beginPath();x.moveTo(-7*s,28*s);x.lineTo(7*s,28*s);x.lineTo(5*s,36*s);x.lineTo(-5*s,36*s);x.fill();
+     x.globalCompositeOperation='lighter';{const g=x.createLinearGradient(0,36*s,0,170*s);g.addColorStop(0,'rgba(255,240,170,.55)');g.addColorStop(1,'rgba(255,240,170,0)');x.fillStyle=g;x.beginPath();x.moveTo(-5*s,36*s);x.lineTo(5*s,36*s);x.lineTo(46*s,170*s);x.lineTo(-46*s,170*s);x.fill()}x.globalCompositeOperation='source-over';break;
+   case '🔧':col('#9aa3ad');x.fillRect(-3*s,0,6*s,40*s);x.beginPath();x.arc(0,44*s,9*s,0,7);x.fill();col('rgba(0,0,0,.6)');x.fillRect(-3*s,38*s,6*s,9*s);break;
+   case '🗡️':case '⚔️':col('#d7dde6');x.fillRect(-3*s,10*s,6*s,56*s);x.beginPath();x.moveTo(-3*s,66*s);x.lineTo(0,76*s);x.lineTo(3*s,66*s);x.fill();col('#7a5230');x.fillRect(-12*s,6*s,24*s,5*s);x.fillRect(-3*s,-8*s,6*s,16*s);break;
+   case '📷':col('#2b2f38');x.fillRect(-14*s,0,28*s,18*s);col('#8fb4d8');x.beginPath();x.arc(0,9*s,6*s,0,7);x.fill();col('#555c68');x.fillRect(-9*s,-4*s,8*s,5*s);break;
+   case '🧭':col('#c8a24a');x.beginPath();x.arc(0,10*s,13*s,0,7);x.fill();col('#1a2030');x.beginPath();x.arc(0,10*s,10*s,0,7);x.fill();x.save();x.translate(0,10*s);x.rotate(t*1.3);col('#ff5a4f');x.beginPath();x.moveTo(0,-9*s);x.lineTo(3*s,0);x.lineTo(-3*s,0);x.fill();col('#fff');x.beginPath();x.moveTo(0,9*s);x.lineTo(3*s,0);x.lineTo(-3*s,0);x.fill();x.restore();break;
+   case '🪄':col('#4a3220');x.fillRect(-2*s,0,4*s,48*s);col('#ffd23f');x.beginPath();x.arc(0,-2*s,5*s,0,7);x.fill();x.strokeStyle='rgba(255,230,120,.9)';x.lineWidth=1.5*s;for(let k=0;k<5;k++){const a=t*3+k*1.26,r=10*s+Math.sin(t*5+k)*4*s;x.beginPath();x.moveTo(Math.cos(a)*r*.5,-2*s+Math.sin(a)*r*.5);x.lineTo(Math.cos(a)*r,-2*s+Math.sin(a)*r);x.stroke()}break;
+   case '📞':col('#1d2128');x.fillRect(-8*s,0,16*s,28*s);col('#6fc3ff');x.fillRect(-6*s,3*s,12*s,18*s);break;
+   case '🔫':col('#20242b');x.fillRect(-4*s,-2*s,8*s,16*s);x.fillRect(-4*s,-2*s,30*s,8*s);break;
+   case '🪓':col('#7a5230');x.fillRect(-2*s,0,4*s,52*s);col('#c9d1da');x.beginPath();x.moveTo(2*s,2*s);x.quadraticCurveTo(26*s,6*s,24*s,26*s);x.lineTo(2*s,20*s);x.fill();break;
+   case '🧸':col('#a8723c');x.beginPath();x.arc(0,10*s,10*s,0,7);x.arc(-8*s,0,5*s,0,7);x.arc(8*s,0,5*s,0,7);x.fill();col('#222');x.beginPath();x.arc(-3*s,9*s,1.5*s,0,7);x.arc(3*s,9*s,1.5*s,0,7);x.fill();break;
+   case '🎒':break; // рюкзак рисуется на спине
+   default:{let hsh=0;for(const c of em||'?')hsh=(hsh*31+c.charCodeAt(0))%360;x.fillStyle=`hsl(${hsh},70%,60%)`;x.beginPath();x.arc(0,10*s,9*s,0,7);x.fill();x.globalCompositeOperation='lighter';const g=x.createRadialGradient(0,10*s,0,0,10*s,24*s);g.addColorStop(0,`hsla(${hsh},90%,70%,.5)`);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(-24*s,-14*s,48*s,48*s);x.globalCompositeOperation='source-over'}
+  }
+  x.restore();
+}
+function drawHero(x,px,py,S,walk,speaking,h,t,act){
+  act=act||'idle';
+  const run=act==='run',sw=Math.sin(walk)*(run?34:26)*S,bob=(act==='idle'||act==='look')?Math.sin(t*1.6)*2*S:Math.abs(Math.sin(walk))*5*S;
   x.save();x.lineCap='round';
   x.fillStyle='#0003';x.beginPath();x.ellipse(px,py+2*S,40*S,9*S,0,0,7);x.fill();
   const oc=COLORS_OUT[h.out].c,hc=COLORS_HAIR[h.hair].c,sk=SKINS[h.skin].c,y=py-bob;
+  const shY=y-148*S,L1=34*S,L2=32*S,aw=13*S;
+  // ноги
   x.strokeStyle='#23283a';x.lineWidth=17*S;
   x.beginPath();x.moveTo(px-9*S,y-92*S);x.lineTo(px-9*S+sw,py);x.moveTo(px+9*S,y-92*S);x.lineTo(px+9*S-sw,py);x.stroke();
   x.strokeStyle='#111';x.lineWidth=11*S;x.beginPath();x.moveTo(px-9*S+sw,py);x.lineTo(px-9*S+sw+10*S,py);x.moveTo(px+9*S-sw,py);x.lineTo(px+9*S-sw+10*S,py);x.stroke();
-  x.strokeStyle=oc;x.lineWidth=13*S;
-  x.beginPath();x.moveTo(px-22*S,y-148*S);x.lineTo(px-26*S-sw*.6,y-104*S);x.stroke();
+  // рюкзак на спине
+  if(h.acc==='🎒'){x.fillStyle='#7a4b2a';x.beginPath();x.roundRect?x.roundRect(px-44*S,y-150*S,24*S,48*S,8*S):x.rect(px-44*S,y-150*S,24*S,48*S);x.fill();x.fillStyle='#5a361d';x.fillRect(px-42*S,y-128*S,20*S,6*S)}
+  // дальняя рука (за телом)
+  const bp=armPose(act,speaking,t,walk,false);
+  limb(x,px-22*S,shY,bp[0],bp[1],L1,L2,aw,oc,sk);
+  // туловище
   x.fillStyle=oc;x.beginPath();x.roundRect?x.roundRect(px-28*S,y-158*S,56*S,76*S,16*S):x.rect(px-28*S,y-158*S,56*S,76*S);x.fill();
   x.fillStyle='#0002';x.fillRect(px-28*S,y-96*S,56*S,8*S);
-  x.strokeStyle=oc;x.lineWidth=13*S;x.beginPath();x.moveTo(px+22*S,y-148*S);x.lineTo(px+30*S+sw*.6,y-104*S);x.stroke();
-  x.fillStyle=sk;x.beginPath();x.arc(px-26*S-sw*.6,y-100*S,7*S,0,7);x.arc(px+30*S+sw*.6,y-100*S,7*S,0,7);x.fill();
-  if(h.acc){x.font=Math.round(34*S)+'px '+EMOJI_FONT;x.textAlign='center';x.textBaseline='middle';x.fillText(h.acc,px+40*S+sw*.6,y-108*S)}
+  // ближняя рука + предмет в ладони
+  const fp=armPose(act,speaking,t,walk,true);
+  const hand=limb(x,px+22*S,shY,fp[0],fp[1],L1,L2,aw,oc,sk);
+  if(h.acc&&h.acc!=='🎒')heldItem(x,h.acc,hand.x,hand.y,-(hand.a)+Math.PI*.0,S*1.0,t);
+  // шея и голова
   x.fillStyle=sk;x.fillRect(px-7*S,y-170*S,14*S,16*S);
   x.beginPath();x.arc(px,y-190*S,30*S,0,7);x.fill();
   x.fillStyle=hc;x.beginPath();x.arc(px,y-193*S,31*S,Math.PI*1.02,Math.PI*1.98);x.fill();
   if(h.gender==='f'){x.fillRect(px-32*S,y-196*S,10*S,46*S);x.fillRect(px+22*S,y-196*S,10*S,46*S)}else{x.fillRect(px-31*S,y-196*S,62*S,12*S)}
   x.fillStyle='#111';x.beginPath();x.arc(px+10*S,y-190*S,3.4*S,0,7);x.arc(px+22*S,y-190*S,3.4*S,0,7);x.fill();
+  if(act==='shock'||act==='hurt'){x.strokeStyle='#111';x.lineWidth=2*S;x.beginPath();x.moveTo(px+6*S,y-199*S);x.lineTo(px+14*S,y-203*S);x.moveTo(px+18*S,y-203*S);x.lineTo(px+26*S,y-199*S);x.stroke()}
   x.strokeStyle='#111';x.lineWidth=2.4*S;x.beginPath();
   if(speaking){const m=Math.abs(Math.sin(t*14))*6*S+2*S;x.fillStyle='#5a1a1a';x.ellipse(px+16*S,y-175*S,5*S,m,0,0,7);x.fill()}
+  else if(act==='shock'||act==='hurt'||act==='hide'){x.fillStyle='#5a1a1a';x.ellipse(px+16*S,y-174*S,4*S,5*S,0,0,7);x.fill()}
   else{x.moveTo(px+9*S,y-176*S);x.quadraticCurveTo(px+16*S,y-172*S,px+23*S,y-177*S);x.stroke()}
   x.restore();
 }
@@ -330,14 +395,15 @@ function dirCtx(i,t){
   return {W,H,S:S0,i,gn:st.genre,world:Engine.W[st.story.world]||Engine.W[st.genre.id],tone:st.hero.tone,comp:st.comp.on,t,
     drawHero(x,px,py,who,wph,sp,act){
       const o=who==='H'?st.hero:st.comp,base=who==='H'?S0*(W>H?1.15:1):S0*(W>H?1.05:.95);
-      drawHero(x,px,py,base*ageScale(o.age)*(act==='hide'?.78:1),wph,sp,o,t);
+      drawHero(x,px,py,base*ageScale(o.age)*(act==='hide'?.78:1),wph,sp,o,t,who==='C'&&!sp&&act==='fight'?'shock':act);
     }};
 }
 function drawFrame(i,p,t,speaking,wordIdx){
   const s=st.story;if(!s)return;
   const sc=s.scenes[i];if(!sc._plan)sc._plan=Director.plan(sc,dirCtx(i,t));
   const x=cv.getContext('2d');
-  Director.render(x,sc._plan,sc,dirCtx(i,t),{t,p,spk:speaking});
+  const rr=Director.render(x,sc._plan,sc,dirCtx(i,t),{t,p,spk:speaking});
+  if(rr&&rr.flashed&&P.on&&$('#amb').checked)Sound.thunder();
   const bar=Math.round(46*S0*(W>H?.5:.3));x.fillStyle='#000';x.fillRect(0,0,W,bar);x.fillRect(0,H-bar,W,bar);
   x.fillStyle='rgba(255,255,255,.85)';x.fillRect(0,0,W*((i+p)/s.scenes.length),4*S0);
   if(t<2.2){const a=Math.min(1,t*2,(2.2-t)*2);x.save();x.globalAlpha=Math.max(0,a);x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';x.shadowColor='#000';x.shadowBlur=12*S0;x.font='800 '+Math.round(54*S0)+'px system-ui,sans-serif';x.fillText(i===0?s.title:'Сцена '+(i+1),W/2,H*.2);x.restore()}
@@ -365,7 +431,8 @@ function startPlay(from){
 }
 function beginScene(i){
   const s=st.story,sc=s.scenes[i];
-  sc._lines=parseLines(sc);if(sc._plan)sc._plan.cam.init=false;P.i=i;P.sT0=performance.now();P.dur=sc._lines.reduce((a,l)=>a+lineEst(l),0)||4;
+  sc._lines=parseLines(sc);if(!sc._plan)sc._plan=Director.plan(sc,dirCtx(i,0));sc._plan.cam.init=false;P.i=i;
+  if($('#amb').checked)Sound.scene(sc,{feats:sc._plan.feats,fx:st.genre.fx,dark:st.genre.dark});P.sT0=performance.now();P.dur=sc._lines.reduce((a,l)=>a+lineEst(l),0)||4;
   $$('.scene').forEach(e=>e.classList.remove('act'));const el=$('#sc'+i);if(el){el.classList.add('act');try{el.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}}
   beginLine(0);
 }
@@ -387,12 +454,12 @@ function nextScene(){
   beginScene(P.i+1);
 }
 function finish(){
-  P.on=false;P.done=true;cancelSpeech();$('#play').textContent='▶ Ещё раз';
+  Sound.stop();P.on=false;P.done=true;cancelSpeech();$('#play').textContent='▶ Ещё раз';
   const x=cv.getContext('2d');x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';x.font='800 '+Math.round(64*S0)+'px system-ui,sans-serif';x.fillText('КОНЕЦ',W/2,H/2);
   x.font='500 '+Math.round(26*S0)+'px system-ui,sans-serif';x.fillText(st.story.title,W/2,H/2+60*S0);
   if(P.onFinish){const f=P.onFinish;P.onFinish=null;setTimeout(f,600)}
 }
-function stopPlay(){P.on=false;P.gen++;clearTimeout(P.safety);cancelAnimationFrame(P.raf);cancelSpeech();const b=$('#play');if(b)b.textContent=P.done?'▶ Ещё раз':'▶ Смотреть'}
+function stopPlay(){Sound.stop();P.on=false;P.gen++;clearTimeout(P.safety);cancelAnimationFrame(P.raf);cancelSpeech();const b=$('#play');if(b)b.textContent=P.done?'▶ Ещё раз':'▶ Смотреть'}
 function loop(now){
   if(!P.on)return;
   const s=st.story,ln=P.cur,el=(now-P.lt0)/1000,nw=ln.words.length;
@@ -409,12 +476,14 @@ $('#play').onclick=()=>{
   startPlay(P.paused&&!P.done?P.i:0);P.paused=false;
 };
 $('#stop').onclick=()=>{P.paused=false;P.done=false;stopPlay();if(st.story)drawFrame(0,0,0,false,-1)};
+$('#amb').onchange=e=>{Sound.setEnabled(e.target.checked);if(P.on&&e.target.checked){const sc=st.story.scenes[P.i];Sound.scene(sc,{feats:sc._plan.feats,fx:st.genre.fx,dark:st.genre.dark})}};
 $('#narr').onchange=()=>{if(P.on){beginLine(P.li)}};
 
 /* ---------- запись и экспорт ---------- */
 async function record(withAudio){
   if(!window.MediaRecorder||!cv.captureStream){alert('Этот браузер не умеет записывать canvas. Используй Chrome или экспорт «HTML-видео».');return}
   const stream=cv.captureStream(30);
+  if(!withAudio&&$('#amb').checked&&Sound.init()&&Sound.dest){Sound.dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t))}
   if(withAudio){try{const d=await navigator.mediaDevices.getDisplayMedia({video:{displaySurface:'browser'},audio:true,preferCurrentTab:true});d.getAudioTracks().forEach(t=>stream.addTrack(t));d.getVideoTracks().forEach(t=>t.stop());}catch(e){alert('Звук вкладки не подключён — запишу без звука.')}}
   const types=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'];
   const mime=types.find(t=>MediaRecorder.isTypeSupported(t))||'';
@@ -426,7 +495,12 @@ async function record(withAudio){
 }
 $('#rec').onclick=()=>record(false);
 $('#recA').onclick=()=>record(true);
-function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000)}
+function dl(blob,name){
+  if(window.Android&&Android.startSave){
+    const fr=new FileReader();fr.onload=()=>{try{const b64=String(fr.result).split(',')[1]||'';Android.startSave(name,blob.type||'application/octet-stream');
+      const CH=900000;for(let i=0;i<b64.length;i+=CH)Android.writeChunk(b64.slice(i,i+CH));Android.endSave()}catch(e){alert('Не удалось сохранить: '+e.message)}};
+    fr.readAsDataURL(blob);return;
+  }const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000)}
 $('#expJson').onclick=()=>dl(new Blob([JSON.stringify(project(),null,2)],{type:'application/json'}),'story-project.json');
 function project(){const s=JSON.parse(JSON.stringify(st.story,(k,v)=>k[0]==='_'?undefined:v));return {genre:st.genre,hero:st.hero,voice:st.voice,story:s}}
 $('#expHtml').onclick=async()=>{
@@ -439,6 +513,7 @@ $('#expHtml').onclick=async()=>{
 };
 
 /* ---------- старт ---------- */
+if(window.Android){const b=$('#recA');if(b)b.style.display='none';const h=$('#recHint');if(h)h.textContent='В приложении видео сохраняется в «Загрузки» со звуком атмосферы; голос диктора читает телефон вживую.'}
 renderGrid();renderHeroForm();syncVoiceUI();
 if(window.__PRESET__){
   const p=window.__PRESET__;st.genre=p.genre;Object.assign(st.hero,p.hero);Object.assign(st.voice,p.voice);st.story=p.story;

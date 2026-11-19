@@ -257,14 +257,14 @@ function render(x,P,sc,ctx,st){
   x.restore();
   /* ---- экранный свет и цвет ---- */
   const sx=W/2+(heroX+40*S-C.x)*C.z,sy=H/2+(feet-120*S-C.y)*C.z;
-  if(sc.flash){const f=Math.sin(t*9)*Math.sin(t*2.3);if(f>.93){x.fillStyle='rgba(255,255,255,.55)';x.fillRect(0,0,W,H)}}
+  let flashed=false;if(sc.flash){const f=Math.sin(t*9)*Math.sin(t*2.3);if(f>.93){flashed=true;x.fillStyle='rgba(255,255,255,.55)';x.fillRect(0,0,W,H)}}
   const d=P.dark;
   if(d>.05){const R=(W>H?330:300)*S*C.z,gr=x.createRadialGradient(sx,sy,R*.12,sx,sy,R);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,`rgba(0,0,0,${d})`);x.fillStyle=gr;x.fillRect(0,0,W,H);x.fillStyle=`rgba(0,0,0,${d*.3})`;x.fillRect(0,0,W,H)}
   /* цветокоррекция: напряжение -> красноватый тон, мрачный тон -> обесцвечивание */
   if(lvl>.4){x.fillStyle=`rgba(255,30,20,${(lvl-.4)*.12})`;x.fillRect(0,0,W,H)}
   if(ctx.tone==='dark'){x.fillStyle='rgba(20,30,50,.18)';x.fillRect(0,0,W,H)}else if(ctx.tone==='warm'){x.fillStyle='rgba(255,170,80,.08)';x.fillRect(0,0,W,H)}
   const v=x.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,`rgba(0,0,0,${.5+lvl*.15})`);x.fillStyle=v;x.fillRect(0,0,W,H);
-  return {heroX,compX,feet};
+  return {heroX,compX,feet,flashed};
 }
 root.Director={plan,render,features,shapeOf,threatLook};
 if(typeof module!=='undefined')module.exports=root.Director;

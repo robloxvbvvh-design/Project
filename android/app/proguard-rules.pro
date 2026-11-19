@@ -1,1 +1,2 @@
 -keep class com.studio.istorii.** { *; }
+-keepclassmembers class * { @android.webkit.JavascriptInterface <methods>; }

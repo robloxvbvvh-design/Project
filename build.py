@@ -3,7 +3,7 @@
 import pathlib
 r = pathlib.Path(__file__).parent
 t = (r / "src/index.tpl.html").read_text(encoding="utf-8")
-for key, f in (("/*CSS*/", "style.css"), ("/*DATA*/", "data.js"), ("/*ENGINE*/", "engine.js"), ("/*DIRECTOR*/", "director.js"), ("/*APP*/", "app.js")):
+for key, f in (("/*CSS*/", "style.css"), ("/*DATA*/", "data.js"), ("/*ENGINE*/", "engine.js"), ("/*DIRECTOR*/", "director.js"), ("/*SOUND*/", "sound.js"), ("/*APP*/", "app.js")):
     body = (r / "src" / f).read_text(encoding="utf-8").replace("</script", "<\\/script")
     t = t.replace(key, body)
 (r / "www").mkdir(exist_ok=True)
