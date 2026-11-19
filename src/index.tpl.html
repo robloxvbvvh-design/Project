@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d0f1a">
+<title>Студия Историй</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<style>/*CSS*/</style>
+</head>
+<body>
+<header class="top"><div class="wrap bar">
+  <div class="logo">🎬 Студия <b>Историй</b></div>
+  <nav class="steps" id="steps">
+    <button data-go="1" class="on">1 История</button>
+    <button data-go="2">2 Герой</button>
+    <button data-go="3">3 Голос</button>
+    <button data-go="4">4 Видео</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+
+<!-- 1. ИСТОРИЯ -->
+<section class="step on" id="s1">
+  <h1>Выбери историю</h1>
+  <p class="lead">37 готовых миров — или впиши свою идею. Дальше настроишь героя и голос, а встроенный агент напишет сценарий, промты для анимации и озвучки и соберёт видео с субтитрами прямо в приложении.</p>
+
+  <div class="card custom">
+    <b>✍️ Своя идея</b>
+    <textarea id="idea" placeholder="Например: девочка-курьер в городе, где закончились все цвета, и ей надо вернуть краски до рассвета…"></textarea>
+    <div class="row"><button class="btn" id="useIdea">Использовать мою идею →</button><span class="hint">Если добавлен ключ Claude (в настройках студии), агент допишет сюжет по-настоящему.</span></div>
+  </div>
+
+  <div class="row" style="margin-bottom:12px"><input type="text" id="q" placeholder="🔎 Поиск: зомби, 90-е, свет…" style="max-width:340px"><span class="hint" id="cnt"></span></div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<!-- 2. ГЕРОЙ -->
+<section class="step" id="s2">
+  <h1>Твой герой</h1>
+  <p class="lead">Измени имя, внешность и характер — всё попадёт в сценарий и в промты.</p>
+  <div class="hero-layout">
+    <div class="card">
+      <div class="two">
+        <div class="field"><label>Имя</label><input type="text" id="hName" maxlength="24"></div>
+        <div class="field"><label>Возраст</label><input type="number" id="hAge" min="5" max="99"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Пол</label><div class="chips" id="hGender"><span class="chip" data-v="m">Мужчина</span><span class="chip" data-v="f">Женщина</span></div></div>
+        <div class="field"><label>Профессия / роль</label><input type="text" id="hProf" maxlength="30" list="profs"></div>
+      </div>
+      <datalist id="profs"><option>Механик</option><option>Врач</option><option>Бывший военный</option><option>Студент</option><option>Журналист</option><option>Охотник</option><option>Курьер</option><option>Учитель</option><option>Программист</option><option>Повар</option></datalist>
+      <div class="field"><label>Характер</label><div class="chips" id="hTrait"></div></div>
+      <div class="field"><label>Цвет одежды</label><div class="chips" id="hOut"></div></div>
+      <div class="two">
+        <div class="field"><label>Волосы</label><div class="chips" id="hHair"></div></div>
+        <div class="field"><label>Кожа</label><div class="chips" id="hSkin"></div></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Предмет героя (эмодзи)</label><input type="text" id="hAcc" maxlength="4"><div class="chips" id="hAccQ"></div></div>
+        <div class="field"><label>Коронная фраза (необязательно)</label><input type="text" id="hCatch" maxlength="60" placeholder="Прорвёмся."></div>
+      </div>
+      <div class="field"><label>Тон истории</label><div class="chips" id="hTone"></div></div>
+    </div>
+    <div class="card preview"><b>Превью</b><canvas id="pv" width="300" height="360"></canvas><span class="hint" id="pvName"></span></div>
+  </div>
+  <div class="nav"><button class="btn sec" data-go="1">← История</button><button class="btn" data-go="3">Голос →</button></div>
+</section>
+
+<!-- 3. ГОЛОС -->
+<section class="step" id="s3">
+  <h1>Голос и характер озвучки</h1>
+  <p class="lead">Выбери образ рассказчика. Подходящий голос предложен под жанр — можно сменить на любой.</p>
+  <div class="card">
+    <h3 style="margin-top:0">Характер голоса</h3>
+    <div class="chips" id="vChips"></div>
+    <div class="two" style="margin-top:14px">
+      <div class="field"><label>Голос устройства</label><select id="vSys"></select><span class="hint" id="vHint"></span></div>
+      <div class="field"><label>Текст для проверки</label><input type="text" id="vTest" value="Я больше не боюсь. Пора идти вперёд."></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>Высота: <span id="pV"></span></label><input type="range" id="vPitch" min=".3" max="2" step=".05"></div>
+      <div class="field"><label>Скорость: <span id="rV"></span></label><input type="range" id="vRate" min=".5" max="1.6" step=".05"></div>
+    </div>
+    <div class="row"><button class="btn sec" id="vPlay">🔊 Послушать</button></div>
+    <h3>Промт озвучки <button class="btn sec sm" data-copy="#vPrompt">Копировать</button></h3>
+    <div class="prompt" id="vPrompt"></div>
+    <span class="hint">Этот текст можно вставить в ElevenLabs, Voice Design и другие генераторы голоса. В самом приложении голос читает системный синтезатор речи.</span>
+  </div>
+  <div class="nav"><button class="btn sec" data-go="2">← Герой</button><button class="btn" id="make">✨ Создать видео</button></div>
+</section>
+
+<!-- 4. СТУДИЯ -->
+<section class="step" id="s4">
+  <h1 id="title">Студия</h1>
+  <div class="layout">
+    <div>
+      <div class="stage" id="stage"><canvas id="cv" width="1280" height="720"></canvas></div>
+      <div class="ctrls">
+        <button class="btn" id="play">▶ Смотреть</button>
+        <button class="btn sec" id="stop">⏹</button>
+        <label class="chip"><input type="checkbox" id="narr" checked> озвучка</label>
+        <label class="chip"><input type="checkbox" id="vert"> вертикаль 9:16</label>
+      </div>
+      <div class="ctrls">
+        <button class="btn sec" id="rec">⏺ Записать видео (.webm)</button>
+        <button class="btn sec" id="recA">⏺ + звук вкладки</button>
+        <button class="btn sec" id="expHtml">⬇ HTML-видео</button>
+        <button class="btn sec" id="expJson">⬇ Проект</button>
+      </div>
+      <span class="hint" id="recHint">Запись со звуком: в окне браузера выберите «Эта вкладка» и включите «Поделиться звуком вкладки».</span>
+    </div>
+    <div>
+      <div class="tabs" id="tabs">
+        <button class="on" data-t="p1">📜 Сценарий</button>
+        <button data-t="p2">🎞 Промты анимации</button>
+        <button data-t="p3">🎙 Озвучка</button>
+        <button data-t="p4">🤖 Агент</button>
+      </div>
+      <div class="pane on" id="p1"></div>
+      <div class="pane" id="p2"></div>
+      <div class="pane" id="p3"><div class="prompt" id="vPrompt2"></div><button class="btn sec sm" data-copy="#vPrompt2">Копировать</button></div>
+      <div class="pane" id="p4">
+        <div class="log" id="log"></div>
+        <div class="row" style="margin-top:10px"><button class="btn sec" id="regen">🔄 Переписать сценарий</button></div>
+        <details><summary>⚙ Настройки агента (необязательно)</summary>
+          <div class="field" style="margin-top:8px"><label>Ключ Claude API — тогда сценарий пишет нейросеть</label>
+          <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off">
+          <span class="hint">Хранится только на этом устройстве и отправляется только на api.anthropic.com. Без ключа работает встроенный генератор.</span></div>
+        </details>
+      </div>
+    </div>
+  </div>
+  <div class="nav"><button class="btn sec" data-go="3">← Голос</button><button class="btn sec" data-go="1">Новая история</button></div>
+</section>
+</main>
+
+<script>/*DATA*/</script>
+<script>/*APP*/</script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
+</body>
+</html>

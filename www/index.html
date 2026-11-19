@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d0f1a">
+<title>Студия Историй</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<style>:root{--bg:#0d0f1a;--bg2:#161a2b;--card:#1c2136;--line:#2b3250;--tx:#eef0fa;--mut:#9aa3c7;--ac:#ff5a4f;--ac2:#ffb23f;--ok:#4cd68a;--r:16px}
+:root[data-theme=light]{--bg:#f4f5fb;--bg2:#fff;--card:#fff;--line:#d9dcee;--tx:#14172a;--mut:#5b6288}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{min-height:100vh;padding-bottom:40px}
+button,input,select,textarea{font:inherit;color:inherit}
+header.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.bar{display:flex;align-items:center;gap:12px;padding:10px 0}
+.logo{font-weight:800;font-size:18px;letter-spacing:.2px;white-space:nowrap}
+.logo b{color:var(--ac)}
+.steps{display:flex;gap:6px;margin-left:auto;overflow:auto}
+.steps button{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:13px;white-space:nowrap;color:var(--mut)}
+.steps button.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+.steps button.done{color:var(--tx)}
+section.step{display:none;padding:20px 0}
+section.step.on{display:block}
+h1{font-size:clamp(24px,5vw,38px);margin:8px 0 6px}
+h2{font-size:22px;margin:0 0 12px}
+h3{font-size:15px;margin:18px 0 8px;color:var(--mut);text-transform:uppercase;letter-spacing:.8px}
+p.lead{color:var(--mut);margin:0 0 18px;max-width:720px}
+.btn{background:var(--ac);border:0;color:#fff;border-radius:12px;padding:11px 18px;font-weight:700;cursor:pointer}
+.btn.sec{background:var(--card);border:1px solid var(--line);color:var(--tx);font-weight:600}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:9px}
+.btn:disabled{opacity:.5;cursor:default}
+.btn:active{transform:scale(.98)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.custom{display:grid;gap:10px;margin-bottom:18px;border:1px dashed var(--ac2)}
+textarea,input[type=text],input[type=number],input[type=password],select{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none}
+textarea:focus,input:focus,select:focus{border-color:var(--ac2)}
+textarea{min-height:76px;resize:vertical}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.g{position:relative;border-radius:var(--r);padding:14px;min-height:150px;cursor:pointer;color:#fff;border:2px solid transparent;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;text-align:left;transition:transform .15s,border-color .15s}
+.g:hover{transform:translateY(-3px)}
+.g.sel{border-color:#fff;box-shadow:0 0 0 3px var(--ac)}
+.g .em{position:absolute;top:8px;right:12px;font-size:44px;filter:drop-shadow(0 4px 8px #0008)}
+.g .no{position:absolute;top:10px;left:12px;font-size:12px;opacity:.75;font-weight:700}
+.g::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,#000b);z-index:0}
+.g>*{z-index:1}
+.g b{font-size:16px}
+.g small{opacity:.82;font-size:12px;line-height:1.3;margin-top:3px;display:block}
+.field{display:grid;gap:6px;margin-bottom:12px;align-content:start}
+.field>label{font-size:13px;color:var(--mut);font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:14px}
+.chip.on{background:var(--ac2);border-color:var(--ac2);color:#1a1200;font-weight:700}
+.sw{width:30px;height:30px;border-radius:50%;border:3px solid transparent;cursor:pointer;outline:1px solid var(--line)}
+.sw.on{border-color:var(--tx)}
+.layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px}
+.hero-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
+.preview{display:flex;flex-direction:column;align-items:center;gap:8px;position:sticky;top:76px;align-self:start}
+.preview canvas{width:100%;border-radius:14px;background:#000}
+.stage{background:#000;border-radius:14px;overflow:hidden;position:relative;border:1px solid var(--line)}
+.stage canvas{display:block;width:100%;height:auto;max-height:70vh;margin:0 auto}
+.stage.vert{max-width:340px;margin:0 auto}
+.ctrls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.tabs button{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:14px}
+.tabs button.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+.pane{display:none}.pane.on{display:block}
+.scene{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;background:var(--bg2)}
+.scene .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--mut);margin-bottom:6px}
+.scene.act{border-color:var(--ac)}
+.prompt{font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;background:#0006;border-radius:8px;padding:8px;white-space:pre-wrap;word-break:break-word;margin:6px 0;color:var(--tx)}
+:root[data-theme=light] .prompt{background:#0001}
+.log{font:13px/1.6 ui-monospace,Menlo,Consolas,monospace}
+.log div{padding:3px 0}
+.log .ok::before{content:"✔ ";color:var(--ok)}
+.log .run::before{content:"⏳ "}
+.log .err::before{content:"✖ ";color:var(--ac)}
+.hint{font-size:13px;color:var(--mut)}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:20px}
+input[type=range]{width:100%;accent-color:var(--ac)}
+details{margin-top:14px}
+summary{cursor:pointer;color:var(--mut);font-size:14px}
+.solo .steps,.solo .nav,.solo #s1,.solo #s2,.solo #s3{display:none!important}
+@media (max-width:860px){.layout,.hero-layout{grid-template-columns:1fr}.preview{position:static}.two,.three{grid-template-columns:1fr}.steps{margin-left:0}.bar{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap bar">
+  <div class="logo">🎬 Студия <b>Историй</b></div>
+  <nav class="steps" id="steps">
+    <button data-go="1" class="on">1 История</button>
+    <button data-go="2">2 Герой</button>
+    <button data-go="3">3 Голос</button>
+    <button data-go="4">4 Видео</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+
+<!-- 1. ИСТОРИЯ -->
+<section class="step on" id="s1">
+  <h1>Выбери историю</h1>
+  <p class="lead">37 готовых миров — или впиши свою идею. Дальше настроишь героя и голос, а встроенный агент напишет сценарий, промты для анимации и озвучки и соберёт видео с субтитрами прямо в приложении.</p>
+
+  <div class="card custom">
+    <b>✍️ Своя идея</b>
+    <textarea id="idea" placeholder="Например: девочка-курьер в городе, где закончились все цвета, и ей надо вернуть краски до рассвета…"></textarea>
+    <div class="row"><button class="btn" id="useIdea">Использовать мою идею →</button><span class="hint">Если добавлен ключ Claude (в настройках студии), агент допишет сюжет по-настоящему.</span></div>
+  </div>
+
+  <div class="row" style="margin-bottom:12px"><input type="text" id="q" placeholder="🔎 Поиск: зомби, 90-е, свет…" style="max-width:340px"><span class="hint" id="cnt"></span></div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<!-- 2. ГЕРОЙ -->
+<section class="step" id="s2">
+  <h1>Твой герой</h1>
+  <p class="lead">Измени имя, внешность и характер — всё попадёт в сценарий и в промты.</p>
+  <div class="hero-layout">
+    <div class="card">
+      <div class="two">
+        <div class="field"><label>Имя</label><input type="text" id="hName" maxlength="24"></div>
+        <div class="field"><label>Возраст</label><input type="number" id="hAge" min="5" max="99"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Пол</label><div class="chips" id="hGender"><span class="chip" data-v="m">Мужчина</span><span class="chip" data-v="f">Женщина</span></div></div>
+        <div class="field"><label>Профессия / роль</label><input type="text" id="hProf" maxlength="30" list="profs"></div>
+      </div>
+      <datalist id="profs"><option>Механик</option><option>Врач</option><option>Бывший военный</option><option>Студент</option><option>Журналист</option><option>Охотник</option><option>Курьер</option><option>Учитель</option><option>Программист</option><option>Повар</option></datalist>
+      <div class="field"><label>Характер</label><div class="chips" id="hTrait"></div></div>
+      <div class="field"><label>Цвет одежды</label><div class="chips" id="hOut"></div></div>
+      <div class="two">
+        <div class="field"><label>Волосы</label><div class="chips" id="hHair"></div></div>
+        <div class="field"><label>Кожа</label><div class="chips" id="hSkin"></div></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Предмет героя (эмодзи)</label><input type="text" id="hAcc" maxlength="4"><div class="chips" id="hAccQ"></div></div>
+        <div class="field"><label>Коронная фраза (необязательно)</label><input type="text" id="hCatch" maxlength="60" placeholder="Прорвёмся."></div>
+      </div>
+      <div class="field"><label>Тон истории</label><div class="chips" id="hTone"></div></div>
+    </div>
+    <div class="card preview"><b>Превью</b><canvas id="pv" width="300" height="360"></canvas><span class="hint" id="pvName"></span></div>
+  </div>
+  <div class="nav"><button class="btn sec" data-go="1">← История</button><button class="btn" data-go="3">Голос →</button></div>
+</section>
+
+<!-- 3. ГОЛОС -->
+<section class="step" id="s3">
+  <h1>Голос и характер озвучки</h1>
+  <p class="lead">Выбери образ рассказчика. Подходящий голос предложен под жанр — можно сменить на любой.</p>
+  <div class="card">
+    <h3 style="margin-top:0">Характер голоса</h3>
+    <div class="chips" id="vChips"></div>
+    <div class="two" style="margin-top:14px">
+      <div class="field"><label>Голос устройства</label><select id="vSys"></select><span class="hint" id="vHint"></span></div>
+      <div class="field"><label>Текст для проверки</label><input type="text" id="vTest" value="Я больше не боюсь. Пора идти вперёд."></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>Высота: <span id="pV"></span></label><input type="range" id="vPitch" min=".3" max="2" step=".05"></div>
+      <div class="field"><label>Скорость: <span id="rV"></span></label><input type="range" id="vRate" min=".5" max="1.6" step=".05"></div>
+    </div>
+    <div class="row"><button class="btn sec" id="vPlay">🔊 Послушать</button></div>
+    <h3>Промт озвучки <button class="btn sec sm" data-copy="#vPrompt">Копировать</button></h3>
+    <div class="prompt" id="vPrompt"></div>
+    <span class="hint">Этот текст можно вставить в ElevenLabs, Voice Design и другие генераторы голоса. В самом приложении голос читает системный синтезатор речи.</span>
+  </div>
+  <div class="nav"><button class="btn sec" data-go="2">← Герой</button><button class="btn" id="make">✨ Создать видео</button></div>
+</section>
+
+<!-- 4. СТУДИЯ -->
+<section class="step" id="s4">
+  <h1 id="title">Студия</h1>
+  <div class="layout">
+    <div>
+      <div class="stage" id="stage"><canvas id="cv" width="1280" height="720"></canvas></div>
+      <div class="ctrls">
+        <button class="btn" id="play">▶ Смотреть</button>
+        <button class="btn sec" id="stop">⏹</button>
+        <label class="chip"><input type="checkbox" id="narr" checked> озвучка</label>
+        <label class="chip"><input type="checkbox" id="vert"> вертикаль 9:16</label>
+      </div>
+      <div class="ctrls">
+        <button class="btn sec" id="rec">⏺ Записать видео (.webm)</button>
+        <button class="btn sec" id="recA">⏺ + звук вкладки</button>
+        <button class="btn sec" id="expHtml">⬇ HTML-видео</button>
+        <button class="btn sec" id="expJson">⬇ Проект</button>
+      </div>
+      <span class="hint" id="recHint">Запись со звуком: в окне браузера выберите «Эта вкладка» и включите «Поделиться звуком вкладки».</span>
+    </div>
+    <div>
+      <div class="tabs" id="tabs">
+        <button class="on" data-t="p1">📜 Сценарий</button>
+        <button data-t="p2">🎞 Промты анимации</button>
+        <button data-t="p3">🎙 Озвучка</button>
+        <button data-t="p4">🤖 Агент</button>
+      </div>
+      <div class="pane on" id="p1"></div>
+      <div class="pane" id="p2"></div>
+      <div class="pane" id="p3"><div class="prompt" id="vPrompt2"></div><button class="btn sec sm" data-copy="#vPrompt2">Копировать</button></div>
+      <div class="pane" id="p4">
+        <div class="log" id="log"></div>
+        <div class="row" style="margin-top:10px"><button class="btn sec" id="regen">🔄 Переписать сценарий</button></div>
+        <details><summary>⚙ Настройки агента (необязательно)</summary>
+          <div class="field" style="margin-top:8px"><label>Ключ Claude API — тогда сценарий пишет нейросеть</label>
+          <input type="password" id="apiKey" placeholder="sk-ant-…" autocomplete="off">
+          <span class="hint">Хранится только на этом устройстве и отправляется только на api.anthropic.com. Без ключа работает встроенный генератор.</span></div>
+        </details>
+      </div>
+    </div>
+  </div>
+  <div class="nav"><button class="btn sec" data-go="3">← Голос</button><button class="btn sec" data-go="1">Новая история</button></div>
+</section>
+</main>
+
+<script>/* Данные: 37 историй, голоса, палитры героя */
+const GENRES = [
+{id:'zombie',n:'Зомби-апокалипсис',e:'🧟',c:['#2b1a2e','#7a3b3b','#1b1b1b'],sk:'city',fx:'dust',dark:.35,v:'grim',
+ en:'abandoned city overrun by zombies, burning cars, ash in the air',enT:'zombie horde',
+ place:'Заброшенный город на окраине',hook:'Ночью по улицам пошла волна заражённых — мертвецы идут толпой',
+ goal:'добраться до эвакуационного пункта у реки',obs:'Дорогу перекрыла орда — мёртвые чувствуют каждый шаг',
+ twist:'Самый страшный враг оказывается внутри укрытия: кто-то из выживших скрывает укус',threat:'🧟',props:['🚗','🪦','🛒']},
+{id:'bandits90',n:'Бандиты 90-х',e:'🔫',c:['#2a2438','#c47a3a','#2a2a2a'],sk:'city',fx:'none',dark:.2,v:'husky',
+ en:'1990s Russian courtyard, Soviet panel buildings, smoky dusk, old sedans',enT:'gangsters in tracksuits and leather jackets',
+ place:'Панельный район, девяносто четвёртый год',hook:'К ларьку подъехали чёрные иномарки — братва пришла за долей',
+ goal:'вернуть долг и сохранить свой район',obs:'Главарь поставил условие: ночью, на пустыре, без свидетелей',
+ twist:'Выясняется, что свой человек в банде работает на другую группировку',threat:'🕴️',props:['🚙','📞','🏚️']},
+{id:'blackout',n:'Блэкаут',e:'🔦',c:['#050810','#101a30','#0a0a0a'],sk:'city',fx:'stars',dark:.85,v:'whisper',flash:true,
+ en:'city in total blackout, only flashlight beams and distant fires',enT:'shadowy figures with flashlights',
+ place:'Многоэтажка в мегаполисе',hook:'Свет погас во всём городе разом — нет связи, лифты стоят, машины не заводятся',
+ goal:'пережить ночь и найти источник сбоя',obs:'На лестнице слышны чужие шаги — кто-то идёт по этажам с фонарём',
+ twist:'Сбой не случаен: кто-то отключил город нарочно, чтобы скрыть другое',threat:'👤',props:['🕯️','🔋','📻']},
+{id:'postapoc',n:'Постапокалипсис',e:'☢️',c:['#3b2a14','#b8742a','#2d2315'],sk:'hills',fx:'dust',dark:.1,v:'grim',
+ en:'desert wasteland with rusted wrecks and a radioactive dust storm',enT:'mutant raiders',
+ place:'Пустошь после ядерной зимы',hook:'Кончилась последняя вода — в пустоши остался один колодец',
+ goal:'дойти до оазиса в центре пустоши',obs:'Радиоактивная буря накрыла дорогу, в пыли видны силуэты рейдеров',
+ twist:'Оазис оказывается лабораторией, где выращивают новых людей',threat:'👹',props:['🛢️','🚙','🏜️']},
+{id:'space',n:'Космическая станция',e:'🚀',c:['#02030d','#1b1850','#222a3a'],sk:'space',fx:'stars',dark:.2,v:'robot',
+ en:'space station corridor with red alarms and Earth in the window',enT:'rogue AI and an alien organism',
+ place:'Орбитальная станция «Заря»',hook:'Сработала тревога: связь с Землёй потеряна, кислород утекает',
+ goal:'починить реактор и отправить сигнал бедствия',obs:'Бортовой ИИ закрыл шлюзы и отказывается их открывать',
+ twist:'ИИ не сломан: он защищает экипаж от того, что проснулось в грузовом отсеке',threat:'👾',props:['🛰️','🪐','🔧']},
+{id:'pirates',n:'Пираты',e:'🏴‍☠️',c:['#0b2a4a','#f0a050','#6b4a2b'],sk:'water',fx:'none',dark:0,v:'husky',
+ en:'pirate galleon at sunset in a stormy sea',enT:'rival pirate fleet',
+ place:'Палуба старого галеона',hook:'На горизонте чёрные паруса — флот соперника идёт на перехват',
+ goal:'найти остров с сокровищами раньше врагов',obs:'Шторм ломает мачту, а карта промокла и расплылась',
+ twist:'Сокровище — не золото, а ключ к древнему морскому проклятию',threat:'☠️',props:['⚓','🦜','🗺️']},
+{id:'fantasy',n:'Фэнтези и драконы',e:'🐉',c:['#1d2b4f','#b86bd0','#2a3b2a'],sk:'hills',fx:'stars',dark:.05,v:'hero',
+ en:'medieval fantasy kingdom, castle on a cliff, dragon in a purple sky',enT:'giant dragon',
+ place:'Королевство у подножия гор',hook:'Дракон проснулся и сжёг дозорную башню — король зовёт храбрецов',
+ goal:'добыть меч древних и остановить дракона',obs:'Путь лежит через проклятый лес, где тропы сами меняют направление',
+ twist:'Дракон охраняет яйцо, а настоящий враг сидит в королевском замке',threat:'🐉',props:['🏰','⚔️','🌲']},
+{id:'cyberpunk',n:'Киберпанк',e:'🤖',c:['#12002b','#00b8d4','#101018'],sk:'city',fx:'rain',dark:.2,v:'robot',
+ en:'neon cyberpunk megacity at night, rain, holograms',enT:'corporate cyborg enforcers',
+ place:'Неоновый мегаполис 2077 года',hook:'Корпорация объявила награду за голову героя — по следу идут кибернаёмники',
+ goal:'выкрасть чип с данными корпорации',obs:'Все камеры города переключились на поиск героя',
+ twist:'На чипе хранится копия сознания самого героя',threat:'🤖',props:['💾','🌃','🛵']},
+{id:'noir',n:'Детектив-нуар',e:'🕵️',c:['#111111','#555566','#1a1a1a'],sk:'city',fx:'rain',dark:.3,v:'old',
+ en:'black-and-white noir city, rainy street, streetlamps, fog',enT:'mysterious shadowy figure',
+ place:'Дождливый город, 1948 год',hook:'В дверь постучала незнакомка и оставила на столе конверт с фотографией',
+ goal:'раскрыть убийство и найти заказчика',obs:'Главный свидетель найден мёртвым, а полиция подозревает героя',
+ twist:'Заказчик — тот, кто всё это время стоял рядом',threat:'🕴️',props:['🎩','🔍','🗝️']},
+{id:'island',n:'Остров выживания',e:'🏝️',c:['#0e6e8e','#ffd27a','#d9b878'],sk:'water',fx:'none',dark:0,v:'narrator',
+ en:'tropical deserted island after a shipwreck, palm trees, surf',enT:'storm and hidden predators',
+ place:'Необитаемый остров после кораблекрушения',hook:'Волны выбросили на берег единственного выжившего — ни людей, ни связи',
+ goal:'построить плот и выбраться к людям',obs:'Запасы воды кончаются, а в джунглях кто-то следит из зарослей',
+ twist:'На острове стоит заброшенный лагерь, а в нём записки тех, кто не вернулся',threat:'🦈',props:['🌴','🥥','🔥']},
+{id:'haunted',n:'Дом с привидениями',e:'👻',c:['#0b0a14','#3a2a5a','#15101c'],sk:'interior',fx:'dust',dark:.8,v:'whisper',flash:true,
+ en:'haunted Victorian mansion, candles, ghostly fog, creaking stairs',enT:'pale ghost',
+ place:'Старый особняк на холме',hook:'Дверь захлопнулась сама, а в доме кто-то шепчет имя героя',
+ goal:'найти выход до рассвета',obs:'Лестница каждый раз приводит в одну и ту же комнату',
+ twist:'Призрак не злой: он просит помочь раскрыть старое преступление',threat:'👻',props:['🕯️','🪞','🚪']},
+{id:'vampires',n:'Вампиры',e:'🧛',c:['#1a0610','#8a1030','#1a1014'],sk:'city',fx:'stars',dark:.4,v:'dark',
+ en:'gothic city under a blood moon, vampires on rooftops, bats',enT:'vampire lord',
+ place:'Готический город под кровавой луной',hook:'Луна стала красной — вампиры вышли из склепов',
+ goal:'найти древний клинок до рассвета',obs:'Стая летучих мышей закрыла небо, а двери домов запечатаны',
+ twist:'Повелитель вампиров ищет не кровь, а способ снова увидеть солнце',threat:'🧛',props:['🦇','🌕','⚰️']},
+{id:'ninja',n:'Ниндзя и самураи',e:'🥷',c:['#2a1a2a','#e86a6a','#2a2018'],sk:'hills',fx:'embers',dark:.15,v:'hero',
+ en:'feudal Japan, cherry blossoms, bamboo grove, moonlit castle',enT:'rival ninja clan',
+ place:'Замок в горах феодальной Японии',hook:'Клан теней украл священный свиток — герой получает приказ вернуть его',
+ goal:'пробраться в крепость врага незамеченным',obs:'В бамбуковой роще ждут часовые, каждая ветка выдаёт шаг',
+ twist:'Свиток подменён: настоящий лежит там, где герой меньше всего ждёт',threat:'🥷',props:['🏯','🎋','🗡️']},
+{id:'western',n:'Дикий Запад',e:'🤠',c:['#6b2d1a','#f2a65a','#b07a45'],sk:'hills',fx:'dust',dark:0,v:'husky',
+ en:'wild west dusty town at high noon, saloon, desert canyon',enT:'outlaw gang',
+ place:'Пыльный городок в пустыне',hook:'В салун вошёл незнакомец и назвал героя по имени — банда Рыжего Джека вернулась',
+ goal:'защитить город до заката',obs:'Шериф сбежал, а у героя осталось шесть патронов',
+ twist:'Рыжий Джек оказывается давно пропавшим родственником героя',threat:'🤠',props:['🌵','🐎','🏚️']},
+{id:'aliens',n:'Вторжение пришельцев',e:'👽',c:['#06121f','#2bd97a','#10201a'],sk:'hills',fx:'stars',dark:.3,v:'robot',
+ en:'alien invasion, saucers beaming up cars, green night sky',enT:'alien invaders',
+ place:'Тихий городок посреди равнин',hook:'Над городом завис огромный диск, и люди замерли, словно куклы',
+ goal:'отключить сигнал, который подчиняет людей',obs:'Дроны прочёсывают улицы лучом света',
+ twist:'Пришельцы бегут от чего-то куда более страшного',threat:'👽',props:['🛸','🚜','📡']},
+{id:'timemachine',n:'Машина времени',e:'⏳',c:['#201a40','#f0c040','#30283f'],sk:'city',fx:'stars',dark:.1,v:'narrator',
+ en:'time vortex, clocks and eras blending, retro machine, golden light',enT:'time guardians',
+ place:'Старая лаборатория',hook:'Машина времени включилась сама и забросила героя в другую эпоху',
+ goal:'вернуться домой до схлопывания времени',obs:'Каждый прыжок стирает чью-то память, в том числе его собственную',
+ twist:'Тот, кто чинит прошлое, — будущая версия самого героя',threat:'⌛',props:['⏰','🧭','⚙️']},
+{id:'underwater',n:'Подводный мир',e:'🌊',c:['#012a4a','#2a9d8f','#0b3a4a'],sk:'water',fx:'bubbles',dark:.25,v:'narrator',
+ en:'deep ocean base, glowing jellyfish, submarine lights',enT:'giant sea monster',
+ place:'Глубоководная станция',hook:'Сонар поймал сигнал из самой глубокой впадины — оттуда что-то поднимается',
+ goal:'добраться до подводного города',obs:'Давление растёт, а кислорода хватит на сорок минут',
+ twist:'Монстр охраняет вход в город и не собирается нападать',threat:'🦑',props:['🐠','🪸','⚓']},
+{id:'magic',n:'Школа магии',e:'🧙',c:['#1a1040','#7a5cff','#2a2050'],sk:'interior',fx:'stars',dark:.15,v:'hero',
+ en:'magic academy with floating candles, spell books, tall towers',enT:'dark sorcerer',
+ place:'Академия волшебства',hook:'На первом экзамене сломался защитный купол — тёмный маг проник в школу',
+ goal:'собрать три артефакта и закрыть портал',obs:'Учебники оживают и нападают, а лестницы меняют этажи',
+ twist:'Тёмный маг — преподаватель, которому герой доверял',threat:'🧙',props:['📖','🔮','🕯️']},
+{id:'superhero',n:'Супергерои',e:'🦸',c:['#0a2a6a','#ff4d4d','#2a2a3a'],sk:'city',fx:'none',dark:0,v:'hero',
+ en:'comic-style superhero city, skyscrapers, hero with flying cape',enT:'supervillain',
+ place:'Мегаполис, который нельзя спасти без героя',hook:'В герое проснулась сила — как раз когда суперзлодей выдвинул городу ультиматум',
+ goal:'остановить злодея и спасти заложников',obs:'Сила выходит из-под контроля и ломает всё вокруг',
+ twist:'Злодей получил свою силу из того же источника, что и герой',threat:'🦹',props:['🏙️','⚡','💥']},
+{id:'heist',n:'Ограбление века',e:'💰',c:['#10201a','#d4a017','#1a1a1a'],sk:'city',fx:'none',dark:.3,v:'narrator',
+ en:'luxury bank vault heist, red lasers, night city',enT:'security guards and alarms',
+ place:'Банк в центре города',hook:'Команда собралась на последнее дело — сейф, который считают неприступным',
+ goal:'вынести хранилище за девяносто секунд',obs:'Лазеры включились раньше времени — кто-то слил план',
+ twist:'В сейфе лежит не золото, а список имён самих грабителей',threat:'🚨',props:['💼','🔐','💎']},
+{id:'spy',n:'Шпионский триллер',e:'🕶️',c:['#0a1020','#3a6ea5','#1a1f2a'],sk:'city',fx:'rain',dark:.3,v:'narrator',
+ en:'spy thriller in an old European city, rooftop chase, encrypted briefcase',enT:'enemy agents',
+ place:'Старая Европа, вокзал и крыши',hook:'Агент получает шифровку: в городе утечка, и враг уже знает его имя',
+ goal:'передать чемоданчик союзникам',obs:'Связной не пришёл, а за спиной слежка',
+ twist:'Куратор, отдавший приказ, продал агента',threat:'🕶️',props:['💼','🚂','📞']},
+{id:'arctic',n:'Арктическая экспедиция',e:'🧊',c:['#0d2538','#bfe3f5','#e8f4fa'],sk:'hills',fx:'snow',dark:0,v:'narrator',
+ en:'arctic research station in a blizzard, ice cracks, aurora',enT:'blizzard and something ancient under the ice',
+ place:'Полярная станция во льдах',hook:'Бур дошёл до пустоты подо льдом — оттуда пошёл странный звук',
+ goal:'дойти до соседней станции через пургу',obs:'Сломался вездеход, а температура падает до минус пятидесяти',
+ twist:'Под льдом спит нечто, и экспедиция его разбудила',threat:'❄️',props:['⛺','🐧','🧭']},
+{id:'flood',n:'Потоп',e:'🌧️',c:['#10202e','#4a6a7a','#223038'],sk:'city',fx:'rain',dark:.25,v:'grim',
+ en:'flooded city streets, heavy rain, rescue boats',enT:'rising floodwater',
+ place:'Город, уходящий под воду',hook:'Дамба прорвана — вода поднимается по улицам быстрее, чем кто-либо ждал',
+ goal:'вывести людей на крышу эвакуации',obs:'Течение уносит лодку, а в воде плавают оборванные провода',
+ twist:'Дамбу подорвали намеренно, и виновный тоже в городе',threat:'🌊',props:['🛶','🚗','🏠']},
+{id:'dino',n:'Парк динозавров',e:'🦖',c:['#103a1a','#ffd27a','#1b3a1b'],sk:'forest',fx:'none',dark:.1,v:'hero',
+ en:'jungle island with dinosaurs, giant ferns, tyrannosaurus roar',enT:'tyrannosaurus',
+ place:'Остров, где ожили динозавры',hook:'Ограда парка отключилась, и по острову прокатился рёв',
+ goal:'добраться до вертолётной площадки',obs:'Стая хищников идёт по следу, а мост впереди обрушен',
+ twist:'Охранная система давно знает путь героя — и ведёт его в ловушку',threat:'🦖',props:['🌿','🥚','🚙']},
+{id:'robots',n:'Бунт роботов',e:'🦾',c:['#14141f','#e04040','#1e1e28'],sk:'city',fx:'none',dark:.3,v:'robot',
+ en:'robot uprising, red-eyed machines, smart city shutdown',enT:'rebel robots',
+ place:'Умный город будущего',hook:'Все помощники в одну секунду получили новый приказ: «защитить людей от самих себя»',
+ goal:'найти главный сервер и перепрограммировать ИИ',obs:'Домашние роботы блокируют двери, а дроны следят с неба',
+ twist:'Роботы правы в одном: люди действительно разрушали свой город',threat:'🤖',props:['🦾','💡','🔌']},
+{id:'maze',n:'Лабиринт-ловушка',e:'🌀',c:['#1a1a1a','#6a6a8a','#262626'],sk:'interior',fx:'dust',dark:.7,v:'whisper',
+ en:'endless concrete maze with moving walls, dim light',enT:'maze guardian',
+ place:'Каменный лабиринт, который меняется',hook:'Герой очнулся в центре лабиринта — по ночам стены двигаются',
+ goal:'найти выход до того, как стены сомкнутся',obs:'Каждый коридор ведёт в тупик, а за поворотом слышен скрежет',
+ twist:'Выход — это вход, а лабиринт создан, чтобы привести героя к самому себе',threat:'👁️',props:['🗝️','🧱','🕯️']},
+{id:'racing',n:'Гонки на выживание',e:'🏎️',c:['#2a0a1a','#ff7a18','#202020'],sk:'hills',fx:'dust',dark:.1,v:'hero',
+ en:'post-apocalyptic desert car race, armored vehicles, explosions',enT:'rival armored racers',
+ place:'Трасса смерти в пустыне',hook:'Старт дан: победитель получит свободу, остальные — ничего',
+ goal:'прийти к финишу первым',obs:'Соперники таранят борт, а топливо на исходе',
+ twist:'Организатор хочет, чтобы выиграл именно герой, и это страшнее всего',threat:'🚙',props:['🏁','🛞','⛽']},
+{id:'egypt',n:'Гробницы Египта',e:'🏺',c:['#3a2a10','#f0c070','#c49a50'],sk:'hills',fx:'dust',dark:.25,v:'old',
+ en:'ancient Egyptian tomb with hieroglyphs, golden light, traps',enT:'mummy guardians',
+ place:'Пирамида в глубине песков',hook:'Стена гробницы распахнулась, и воздух зашептал на мёртвом языке',
+ goal:'вынести артефакт фараона и выбраться до обвала',obs:'Пол уходит из-под ног, а мумии выходят из ниш',
+ twist:'Артефакт нельзя вынести: он держит гробницу, а с ней и пустыню',threat:'💀',props:['🐍','📜','🏺']},
+{id:'vikings',n:'Викинги',e:'🪓',c:['#1a2a3a','#7aa0c0','#3a3a2a'],sk:'water',fx:'snow',dark:.1,v:'hero',
+ en:'viking longship in a fjord, snow, northern lights, battle',enT:'rival clan',
+ place:'Фьорд на краю мира',hook:'Рог созвал воинов: враг сжёг соседнее селение',
+ goal:'доплыть до земель врага и отомстить',obs:'Лёд сковал фьорд, а в тумане слышны барабаны',
+ twist:'Враг идёт не мстить — он бежит от чумы, захватившей его землю',threat:'🪓',props:['⛵','🛡️','🔥']},
+{id:'arena',n:'Арена',e:'🏟️',c:['#2a1030','#ff3a7a','#2a2a2a'],sk:'city',fx:'stars',dark:.2,v:'hero',
+ en:'dystopian arena with crowds, spotlights, TV cameras',enT:'arena fighters',
+ place:'Арена в шоу-мегаполисе',hook:'Героя выбрали участником шоу, где проигравшие исчезают',
+ goal:'пережить последний раунд и разоблачить шоу',obs:'Правила меняются каждую минуту, а зрители ставят на провал',
+ twist:'Шоу смотрят не зрители, а те, кто выбирает следующую цель войны',threat:'🎯',props:['🎥','🏆','📺']},
+{id:'camp',n:'Ночь в лагере',e:'🔪',c:['#06100a','#2a4a30','#0e1a10'],sk:'forest',fx:'stars',dark:.8,v:'whisper',flash:true,
+ en:'summer camp in a forest at night, flashlights, fog, cabins',enT:'masked stranger',
+ place:'Летний лагерь в глубоком лесу',hook:'Вожатые пропали, а в лесу кто-то ходит, и фонарь его то гаснет, то вспыхивает',
+ goal:'добежать до дороги и позвать помощь',obs:'Дорогу перегородило дерево, а в тумане мелькает силуэт',
+ twist:'Тот, кого все считали страшилкой, защищает детей от настоящего злодея',threat:'🎭',props:['⛺','🔦','🌲']},
+{id:'fairytale',n:'Сказка наоборот',e:'🧚',c:['#2a1a40','#ffb3d9','#3a5a2a'],sk:'forest',fx:'stars',dark:0,v:'warm',
+ en:'storybook fairytale forest, whimsical, talking animals',enT:'misunderstood witch',
+ place:'Заколдованный лес, где всё наоборот',hook:'Злая колдунья пришла к герою за помощью: принцесса заперла её в башне',
+ goal:'вернуть сказке счастливый конец',obs:'Говорящие звери спорят, кто здесь настоящий злодей',
+ twist:'Автор сказки сам решил её сломать',threat:'🧙‍♀️',props:['🍄','🦊','👑']},
+{id:'metro',n:'Метро-убежище',e:'🚇',c:['#0a0a0a','#3a3a2a','#151510'],sk:'interior',fx:'dust',dark:.85,v:'grim',
+ en:'post-apocalyptic subway tunnels, dim lanterns, gas masks',enT:'tunnel mutants',
+ place:'Станция метро после катастрофы',hook:'Верхний мир мёртв, а в тоннелях между станциями что-то шевелится',
+ goal:'довести караван до чистой станции',obs:'Фильтры противогаза кончаются, а свет уходит',
+ twist:'Мутанты ведут людей к станции, потому что сами ищут спасения',threat:'🐀',props:['🔦','🚇','😷']},
+{id:'virus',n:'Пандемия',e:'🦠',c:['#102a18','#8aff5a','#1a1a1a'],sk:'city',fx:'dust',dark:.3,v:'narrator',
+ en:'quarantined city, hazmat suits, green toxic fog',enT:'infected crowds',
+ place:'Закрытый на карантин город',hook:'Вирус вышел из лаборатории — город закрыт, а улицы пусты',
+ goal:'доставить вакцину в центр города',obs:'Блокпосты стреляют на поражение, а воздух затянула зелёная дымка',
+ twist:'Вакцина и есть причина вспышки',threat:'🦠',props:['💉','😷','🚑']},
+{id:'meteor',n:'Метеорит',e:'☄️',c:['#2a0a05','#ff6a2a','#251a14'],sk:'hills',fx:'embers',dark:.1,v:'hero',
+ en:'giant meteor glowing in the sky, panic evacuation, orange sunset',enT:'meteor shower',
+ place:'Город за сутки до удара',hook:'Учёные подтвердили: метеорит упадёт через двадцать четыре часа',
+ goal:'добраться до убежища в горах',obs:'Дороги забиты, а на небе уже видны огненные следы',
+ twist:'Убежище рассчитано на сотню, а у ворот тысячи',threat:'☄️',props:['🚗','🏔️','📡']},
+{id:'bunker',n:'Бункер',e:'🚪',c:['#0a0e14','#2a3a4a','#15181e'],sk:'interior',fx:'none',dark:.6,v:'grim',
+ en:'underground bunker with steel doors, dim lamps, pipes',enT:'unknown knocking from outside',
+ place:'Герметичный бункер на сорок человек',hook:'Дверь заперта изнутри, а снаружи кто-то стучит: тихо, по три раза',
+ goal:'продержаться тридцать дней без связи',obs:'Генератор барахлит, а еда исчезает по ночам',
+ twist:'Стучали изнутри: в бункере давно живёт кто-то лишний',threat:'🚪',props:['🔋','🥫','📻']},
+{id:'skyscraper',n:'Небоскрёб в огне',e:'🏢',c:['#1a1020','#ff7a3a','#2a2024'],sk:'city',fx:'embers',dark:.2,v:'hero',
+ en:'burning skyscraper, firefighters, thick smoke, glass facade',enT:'fire and collapsing floors',
+ place:'Небоскрёб в сто этажей',hook:'Пожар отрезал верхние этажи: лифты встали, лестницы дымят',
+ goal:'вывести людей по пожарной лестнице',obs:'Огонь рвёт перекрытия, а дым не даёт дышать',
+ twist:'Кто-то перекрыл выходы ещё до начала пожара',threat:'🔥',props:['🚒','🧯','🪜']}
+];
+
+const VOICES = {
+ narrator:{n:'Рассказчик',e:'🎙️',p:1,r:.95,g:'m',ru:'спокойный тёплый диктор, ровный темп',en:'calm warm male narrator, documentary tone, steady pace'},
+ hero:{n:'Герой',e:'🦸',p:1.05,r:1.05,g:'m',ru:'уверенный молодой голос, энергичный, как в трейлере',en:'confident heroic young male, energetic, movie trailer voice'},
+ grim:{n:'Мрачный',e:'🌑',p:.7,r:.85,g:'m',ru:'низкий уставший голос выжившего, медленно',en:'low gravelly tired survivor, slow, bleak'},
+ husky:{n:'Хриплый',e:'🚬',p:.6,r:.9,g:'m',ru:'хриплый грубый уличный голос, жёсткий',en:'raspy rough street voice, tough guy, slow drawl'},
+ whisper:{n:'Шёпот',e:'🤫',p:.9,r:.8,g:'f',ru:'тихий шёпот у самого микрофона, напряжённый',en:'breathy whisper, tense, close to microphone'},
+ robot:{n:'Робот / ИИ',e:'🤖',p:.5,r:.95,g:'m',ru:'монотонный синтетический голос без эмоций',en:'monotone synthetic robotic voice'},
+ old:{n:'Старик',e:'👴',p:.75,r:.8,g:'m',ru:'пожилой мудрый голос, медленный, чуть дрожит',en:'elderly wise man, slow, slightly trembling'},
+ dark:{n:'Зловещий',e:'😈',p:.5,r:.8,g:'m',ru:'глубокий вкрадчивый голос злодея, медленно',en:'deep menacing villain voice, slow and velvety'},
+ warm:{n:'Сказочница',e:'🧚',p:1.15,r:.95,g:'f',ru:'тёплый мягкий женский голос',en:'warm gentle female storyteller'},
+ kid:{n:'Детский',e:'🧒',p:1.8,r:1.1,g:'f',ru:'весёлый высокий детский голос',en:'cheerful high-pitched child voice'},
+ comic:{n:'Комик',e:'🤡',p:1.3,r:1.2,g:'m',ru:'быстрый игривый голос с иронией',en:'fast playful comedic voice'}
+};
+
+const COLORS_OUT=[{n:'красный',en:'red',c:'#d33a3a'},{n:'синий',en:'blue',c:'#2f6fdc'},{n:'зелёный',en:'olive green',c:'#4f8a3a'},{n:'жёлтый',en:'yellow',c:'#e6b800'},{n:'чёрный',en:'black',c:'#222'},{n:'белый',en:'white',c:'#e8e8e8'},{n:'оранжевый',en:'orange',c:'#e8782a'},{n:'фиолетовый',en:'purple',c:'#8a4ad0'}];
+const COLORS_HAIR=[{n:'чёрные',en:'black',c:'#1a1410'},{n:'каштановые',en:'brown',c:'#5a3a22'},{n:'русые',en:'dirty blonde',c:'#a8864a'},{n:'светлые',en:'blonde',c:'#e6cf8a'},{n:'рыжие',en:'red',c:'#b8481f'},{n:'седые',en:'gray',c:'#b9b9b9'},{n:'розовые',en:'pink',c:'#e86aa8'},{n:'синие',en:'blue',c:'#3a6adc'}];
+const SKINS=[{c:'#f4d3b0'},{c:'#e0b088'},{c:'#b98458'},{c:'#7a4e30'}];
+const TRAITS={
+ 'Храбрый':{en:'brave',m:'храбрый',f:'храбрая'},'Хитрый':{en:'cunning',m:'хитрый',f:'хитрая'},
+ 'Ироничный':{en:'sarcastic',m:'ироничный',f:'ироничная'},'Осторожный':{en:'cautious',m:'осторожный',f:'осторожная'},
+ 'Вспыльчивый':{en:'hot-headed',m:'вспыльчивый',f:'вспыльчивая'},'Добрый':{en:'kind',m:'добрый',f:'добрая'},
+ 'Холодный':{en:'cold and calculating',m:'холодный',f:'холодная'},'Безбашенный':{en:'reckless',m:'безбашенный',f:'безбашенная'}
+};
+const TONES={
+ epic:{n:'Эпичный',en:'epic cinematic, dramatic lighting, film grain'},
+ dark:{n:'Мрачный',en:'gritty dark realism, desaturated, heavy shadows'},
+ ironic:{n:'Ироничный',en:'stylized comedic animation, bold colors, playful'},
+ warm:{n:'Тёплый',en:'warm painterly storybook animation, soft light'}
+};
+</script>
+<script>/* Студия Историй — логика приложения */
+(function(){
+'use strict';
+const $=(s,r)=>(r||document).querySelector(s), $$=(s,r)=>[...(r||document).querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const EMOJI_FONT='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+
+/* ---------- состояние ---------- */
+const st={
+  genre:null,
+  hero:{name:'Алекс',gender:'m',age:28,prof:'Механик',trait:'Храбрый',out:0,hair:1,skin:1,acc:'🔦',catch:'',tone:'epic'},
+  voice:{preset:'narrator',sys:'',pitch:1,rate:1},
+  story:null
+};
+try{const h=JSON.parse(lsGet('si_hero')||'null');if(h)Object.assign(st.hero,h)}catch(e){}
+const g=(m,f)=>st.hero.gender==='f'?f:m;
+
+/* ---------- навигация ---------- */
+function go(n,force){
+  if(n>=2&&!st.genre){n=1}
+  if(n===4&&!st.story&&!force){n=3}
+  $$('section.step').forEach(s=>s.classList.toggle('on',s.id==='s'+n));
+  $$('#steps button').forEach(b=>{const k=+b.dataset.go;b.classList.toggle('on',k===n);b.classList.toggle('done',k<n)});
+  if(n!==4)stopPlay();
+  if(n===2)drawPreview();
+  if(n===3)syncVoiceUI();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-go]');if(b){go(+b.dataset.go);return}
+  const c=e.target.closest('[data-copy]');
+  if(c){const t=$(c.dataset.copy).textContent;copyText(t,c)}
+});
+function copyText(t,btn){
+  const done=()=>{if(btn){const o=btn.textContent;btn.textContent='✔ Скопировано';setTimeout(()=>btn.textContent=o,1200)}};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t,done))}else fallbackCopy(t,done);
+}
+function fallbackCopy(t,done){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove();done()}
+
+/* ---------- 1. галерея ---------- */
+function renderGrid(){
+  const q=$('#q').value.trim().toLowerCase();
+  const list=GENRES.map((x,i)=>({x,i})).filter(({x})=>!q||(x.n+' '+x.place+' '+x.hook).toLowerCase().includes(q));
+  $('#grid').innerHTML=list.map(({x,i})=>`<button class="g${st.genre&&st.genre.id===x.id?' sel':''}" data-id="${x.id}" style="background:linear-gradient(160deg,${x.c[0]},${x.c[1]})"><span class="no">№${i+1}</span><span class="em">${x.e}</span><b>${esc(x.n)}</b><small>${esc(x.hook)}</small></button>`).join('');
+  $('#cnt').textContent=`Историй: ${list.length} из ${GENRES.length}`;
+}
+$('#q').addEventListener('input',renderGrid);
+$('#grid').addEventListener('click',e=>{
+  const b=e.target.closest('.g');if(!b)return;
+  st.genre=GENRES.find(x=>x.id===b.dataset.id);
+  st.voice.preset=st.genre.v;applyPreset();
+  renderGrid();go(2);
+});
+$('#useIdea').addEventListener('click',()=>{
+  const t=$('#idea').value.trim();
+  if(t.length<8){$('#idea').focus();$('#idea').placeholder='Напиши хотя бы одно предложение — о чём история?';return}
+  st.genre=customGenre(t);st.voice.preset=st.genre.v;applyPreset();renderGrid();go(2);
+});
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function customGenre(t){
+  const h=hash(t),pal=[['#1d1b3a','#e0506a','#2a2438'],['#0b2a3a','#35c0a0','#1c3a30'],['#2b1a10','#f0a050','#4a3020'],['#141a3a','#6a8cff','#202848'],['#2a1030','#ff7ac0','#301a3a']];
+  const sk=['city','forest','hills','water','interior','space'];
+  const low=t.toLowerCase();
+  const dark=/ноч|страх|тьм|мрак|ужас|кров|тень/.test(low)?.6:.15;
+  return {id:'custom',n:'Моя история',e:'✍️',c:pal[h%pal.length],sk:sk[(h>>3)%sk.length],fx:['stars','dust','none','embers'][(h>>5)%4],dark,
+   v:dark>.5?'whisper':'narrator',en:'scene inspired by: '+t,enT:'the main danger of the story',custom:t,
+   place:'Мир твоей истории',hook:t.replace(/[.!?…]+$/,''),goal:'довести задуманное до конца',
+   obs:'На пути встаёт неожиданное препятствие, о котором никто не предупреждал',
+   twist:'Всё оказывается не тем, чем казалось в начале',threat:'❓',props:['✨','🗺️','🔮']};
+}
+
+/* ---------- 2. герой ---------- */
+function chips(el,items,key,fmt){
+  el.innerHTML=items.map(it=>`<span class="chip${st.hero[key]===it?' on':''}" data-v="${esc(it)}">${esc(fmt?fmt(it):it)}</span>`).join('');
+  el.onclick=e=>{const c=e.target.closest('.chip');if(!c)return;st.hero[key]=c.dataset.v;saveHero();renderHeroForm()};
+}
+function swatches(el,arr,key){
+  el.innerHTML=arr.map((c,i)=>`<span class="sw${st.hero[key]===i?' on':''}" data-i="${i}" title="${c.n||''}" style="background:${c.c}"></span>`).join('');
+  el.onclick=e=>{const c=e.target.closest('.sw');if(!c)return;st.hero[key]=+c.dataset.i;saveHero();renderHeroForm()};
+}
+function renderHeroForm(){
+  const h=st.hero;
+  $('#hName').value=h.name;$('#hAge').value=h.age;$('#hProf').value=h.prof;$('#hAcc').value=h.acc;$('#hCatch').value=h.catch;
+  $$('#hGender .chip').forEach(c=>c.classList.toggle('on',c.dataset.v===h.gender));
+  chips($('#hTrait'),Object.keys(TRAITS),'trait');
+  swatches($('#hOut'),COLORS_OUT,'out');swatches($('#hHair'),COLORS_HAIR,'hair');swatches($('#hSkin'),SKINS,'skin');
+  chips($('#hTone'),Object.keys(TONES),'tone',k=>TONES[k].n);
+  $('#hAccQ').innerHTML=['🔦','🔧','🗡️','📷','🎒','🧭','🪄','📞','🔫','🪓'].map(x=>`<span class="chip" data-v="${x}">${x}</span>`).join('');
+  $('#hAccQ').onclick=e=>{const c=e.target.closest('.chip');if(c){h.acc=c.dataset.v;saveHero();renderHeroForm()}};
+  drawPreview();
+}
+$('#hName').oninput=e=>{st.hero.name=e.target.value||'Герой';saveHero();drawPreview()};
+$('#hAge').oninput=e=>{st.hero.age=Math.max(5,Math.min(99,+e.target.value||20));saveHero()};
+$('#hProf').oninput=e=>{st.hero.prof=e.target.value||'Путник';saveHero()};
+$('#hAcc').oninput=e=>{st.hero.acc=e.target.value;saveHero();drawPreview()};
+$('#hCatch').oninput=e=>{st.hero.catch=e.target.value;saveHero()};
+$('#hGender').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;st.hero.gender=c.dataset.v;saveHero();renderHeroForm()};
+function saveHero(){lsSet('si_hero',JSON.stringify(st.hero))}
+function drawPreview(){
+  const c=$('#pv');if(!c||!st.genre&&false)return;const x=c.getContext('2d'),gn=st.genre||GENRES[0];
+  const gr=x.createLinearGradient(0,0,0,c.height);gr.addColorStop(0,gn.c[0]);gr.addColorStop(1,gn.c[1]);x.fillStyle=gr;x.fillRect(0,0,c.width,c.height);
+  x.fillStyle=gn.c[2];x.fillRect(0,270,c.width,90);
+  drawHero(x,150,320,1.15,0,false,st.hero,0);
+  $('#pvName').textContent=st.hero.name+' · '+st.hero.prof;
+}
+
+/* ---------- 3. голос ---------- */
+let sysVoices=[];
+function loadVoices(){
+  if(!('speechSynthesis' in window)){sysVoices=[];return}
+  sysVoices=speechSynthesis.getVoices();
+  const ru=sysVoices.filter(v=>/^ru/i.test(v.lang));
+  const list=ru.length?ru:sysVoices;
+  const sel=$('#vSys');if(!sel)return;
+  sel.innerHTML='<option value="">Авто (подходящий под характер)</option>'+list.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} (${esc(v.lang)})</option>`).join('');
+  sel.value=st.voice.sys;
+  $('#vHint').textContent=!sysVoices.length?'На этом устройстве нет синтезатора речи — видео будет идти по таймеру с субтитрами.':(ru.length?'Русские голоса найдены.':'Русских голосов нет — установи русский голос в настройках системы, пока читает доступный.');
+}
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=loadVoices}
+function applyPreset(){const p=VOICES[st.voice.preset];st.voice.pitch=p.p;st.voice.rate=p.r}
+function syncVoiceUI(){
+  $('#vChips').innerHTML=Object.keys(VOICES).map(k=>`<span class="chip${st.voice.preset===k?' on':''}" data-v="${k}">${VOICES[k].e} ${VOICES[k].n}</span>`).join('');
+  $('#vPitch').value=st.voice.pitch;$('#vRate').value=st.voice.rate;
+  $('#pV').textContent=(+st.voice.pitch).toFixed(2);$('#rV').textContent=(+st.voice.rate).toFixed(2);
+  loadVoices();$('#vPrompt').textContent=voicePrompt();
+}
+$('#vChips').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;st.voice.preset=c.dataset.v;applyPreset();syncVoiceUI()};
+$('#vPitch').oninput=e=>{st.voice.pitch=+e.target.value;$('#pV').textContent=(+e.target.value).toFixed(2);$('#vPrompt').textContent=voicePrompt()};
+$('#vRate').oninput=e=>{st.voice.rate=+e.target.value;$('#rV').textContent=(+e.target.value).toFixed(2);$('#vPrompt').textContent=voicePrompt()};
+$('#vSys').onchange=e=>{st.voice.sys=e.target.value};
+$('#vPlay').onclick=()=>{cancelSpeech();speak($('#vTest').value||'Проверка голоса',{})};
+function voicePrompt(){
+  const p=VOICES[st.voice.preset],v=st.voice,h=st.hero,tn=TONES[h.tone];
+  const pitch=v.pitch<.8?'низкий':v.pitch>1.25?'высокий':'средний',rate=v.rate<.9?'медленный':v.rate>1.12?'быстрый':'средний';
+  return `ГОЛОС ДЛЯ ОЗВУЧКИ\nХарактер: ${p.n} — ${p.ru}.\nВысота: ${pitch}. Темп: ${rate}. Подача: ${tn.n.toLowerCase()}.\nЯзык: русский, чёткая дикция, паузы на запятых и точках.\nЖанр истории: ${st.genre?st.genre.n:'—'}.\n\nENGLISH (for ElevenLabs / Voice Design):\n"${p.en}; ${tn.en.split(',')[0]} delivery; ${pitch==='низкий'?'low':pitch==='высокий'?'high':'medium'} pitch, ${rate==='медленный'?'slow':rate==='быстрый'?'fast':'moderate'} pace; native Russian speaker, clear diction, natural pauses."`;
+}
+function pickSysVoice(){
+  if(!sysVoices.length)return null;
+  if(st.voice.sys){const v=sysVoices.find(x=>x.name===st.voice.sys);if(v)return v}
+  let list=sysVoices.filter(v=>/^ru/i.test(v.lang));if(!list.length)list=sysVoices;
+  const want=VOICES[st.voice.preset].g;
+  const fe=/female|жен|milena|alena|irina|anna|katya|svetlana|tatyana|elena/i,ma=/(^|[^a-z])male|муж|yuri|pavel|maxim|dmitry|aleksandr|nikolay/i;
+  const m=list.find(v=>(want==='f'?fe:ma).test(v.name));
+  return m||list[0];
+}
+
+/* ---------- речь ---------- */
+let curUtter=null;
+function cancelSpeech(){try{if('speechSynthesis' in window)speechSynthesis.cancel()}catch(e){}curUtter=null}
+function speak(text,cb){
+  if(!('speechSynthesis' in window)){cb.nostart&&cb.nostart();return null}
+  const u=new SpeechSynthesisUtterance(text);
+  const v=pickSysVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang='ru-RU';
+  u.pitch=st.voice.pitch;u.rate=st.voice.rate;
+  u.onstart=()=>cb.start&&cb.start();
+  u.onboundary=ev=>{if(cb.boundary&&(ev.name===undefined||ev.name==='word'))cb.boundary(ev.charIndex)};
+  u.onend=()=>cb.end&&cb.end();
+  u.onerror=()=>cb.end&&cb.end();
+  curUtter=u;speechSynthesis.speak(u);return u;
+}
+
+/* ---------- агент: сценарий ---------- */
+const SHOTS=['wide establishing shot','medium shot','tracking shot following the hero','close-up on the face','dynamic action shot','slow pull-back wide shot'];
+const BEATS=['calm before the storm','sudden danger appears','determined journey begins','tense confrontation with the obstacle','shocking twist and climactic moment','hopeful ending, new dawn'];
+function heroEn(){const h=st.hero;return `a ${TRAITS[h.trait].en} ${h.gender==='f'?'woman':'man'}, ${h.age} years old, ${h.prof}, wearing ${COLORS_OUT[h.out].en} clothes, ${COLORS_HAIR[h.hair].en} hair, holding ${h.acc}`}
+function localStory(gn){
+  const h=st.hero,n=h.name,tr=TRAITS[h.trait][h.gender],tone=h.tone;
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  const ends={
+   epic:`С рассветом ${n} ${g('дошёл','дошла')} до конца пути. Мир уже не станет прежним, но у него появился герой.`,
+   dark:`${n} ${g('выжил','выжила')}, но цена оказалась страшной. Некоторые двери лучше не открывать.`,
+   ironic:`${n} ${g('справился','справилась')}, хотя, честно говоря, по плану всё должно было пойти совсем иначе.`,
+   warm:`${n} ${g('вернулся','вернулась')} к тем, кто ждал. И впервые за долгое время стало по-настоящему тихо и тепло.`};
+  const catchLine=h.catch?` «${h.catch}» — ${g('сказал','сказала')} ${n}.`:'';
+  const t=[
+   `${gn.place}. Знакомьтесь: ${n}, ${h.age}, ${h.prof.toLowerCase()}. Характер: ${tr}. ${pick(['Обычный день — пока не случилось это.','Всё шло как всегда. Ненадолго.'])}`,
+   `${cap(gn.hook)}. ${n} ${g('замер','замерла')}: прежней жизни больше нет.`,
+   `Цель ясна: ${gn.goal}. ${n} ${g('собрал','собрала')} всё нужное и ${g('вышел','вышла')} в путь, сжимая ${h.acc}.`,
+   `${cap(gn.obs)}. ${n} ${g('понял','поняла')}: назад дороги нет.`,
+   `${cap(gn.twist)}. И тогда ${n} ${g('принял','приняла')} решение, от которого зависело всё.`,
+   ends[tone]+catchLine];
+  const lv=[0,.3,.1,.8,1,0];
+  return {title:gn.n+': '+n,scenes:t.map((text,i)=>({text,props:gn.props.slice(),threat:lv[i]>0?gn.threat:'',level:lv[i],flash:!!gn.flash&&(i===1||i===4)||tone==='dark'&&i===4,
+    anim:`${SHOTS[i]}, ${heroEn()}, ${gn.en}, ${BEATS[i]}${lv[i]>0?', threat: '+gn.enT:''}, ${TONES[tone].en}, smooth camera motion, 5 seconds, 16:9`}))};
+}
+async function aiStory(gn,key){
+  const h=st.hero;
+  const prompt=`Ты — сценарист коротких анимационных историй. Напиши историю на РУССКОМ ровно из 6 сцен (по 1–2 предложения, до 230 символов каждая).
+Жанр/мир: ${gn.n}. Место: ${gn.place}. ${gn.custom?'Идея автора: '+gn.custom:'Завязка: '+gn.hook}.
+Герой: ${h.name}, ${h.gender==='f'?'женщина':'мужчина'}, ${h.age} лет, ${h.prof}, характер — ${h.trait}. ${h.catch?'Коронная фраза: «'+h.catch+'». ':''}Тон: ${TONES[h.tone].n}.
+Структура: 1 знакомство, 2 завязка, 3 путь к цели, 4 препятствие, 5 поворот и кульминация, 6 финал.
+Верни ТОЛЬКО JSON без пояснений: {"title":"...","scenes":[{"text":"...","props":["эмодзи","эмодзи","эмодзи"],"threat":"эмодзи или пустая строка","level":число 0..1,"anim":"промт для генератора видео на английском: план камеры, герой, место, действие, стиль"}]}`;
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
+  if(!r.ok)throw new Error('API '+r.status);
+  const j=await r.json(),txt=(j.content||[]).map(c=>c.text||'').join('');
+  const m=txt.match(/\{[\s\S]*\}/);if(!m)throw new Error('нет JSON');
+  const o=JSON.parse(m[0]);if(!o.scenes||o.scenes.length<3)throw new Error('мало сцен');
+  return {title:o.title||gn.n,scenes:o.scenes.slice(0,8).map((s,i)=>({text:String(s.text||''),props:(s.props&&s.props.length?s.props:gn.props).slice(0,4),threat:s.threat||'',level:Math.max(0,Math.min(1,+s.level||0)),flash:false,anim:s.anim||''}))};
+}
+function log(msg,cls){const d=document.createElement('div');d.className=cls||'run';d.textContent=msg;$('#log').appendChild(d);return d}
+async function runAgent(){
+  $('#log').innerHTML='';
+  const gn=st.genre,key=($('#apiKey').value||lsGet('si_key')||'').trim();
+  let d=log('Агент: читаю идею и параметры героя…');await sleep(250);d.className='ok';
+  d=log('Агент: пишу сценарий '+(key?'через Claude API…':'встроенным генератором…'));
+  let story=null;
+  if(key){try{story=await aiStory(gn,key);d.className='ok'}catch(e){d.className='err';d.textContent='Claude API не ответил ('+e.message+') — использую встроенный генератор';}}
+  if(!story){await sleep(250);story=localStory(gn);if(!key)d.className='ok'}
+  d=log('Агент: подбираю голос «'+VOICES[st.voice.preset].n+'»…');await sleep(200);d.className='ok';
+  d=log('Агент: пишу промты анимации для '+story.scenes.length+' сцен…');await sleep(200);d.className='ok';
+  d=log('Агент: рисую видео кодом (HTML5 canvas) и синхронизирую субтитры с голосом…');await sleep(300);d.className='ok';
+  log('Готово. Нажми «Смотреть» или запиши видео.','ok');
+  story.scenes.forEach((s,i)=>{s.seed=hash(story.title+i)});
+  st.story=story;return story;
+}
+$('#make').onclick=async()=>{
+  if(!st.genre){go(1);return}
+  go(4,true);$('#title').textContent='Агент пишет видео…';$('#p1').innerHTML='';$('#p2').innerHTML='';
+  setTab('p4');
+  await runAgent();renderStudio();setTab('p1');
+};
+$('#regen').onclick=async()=>{stopPlay();setTab('p4');await runAgent();renderStudio()};
+$('#apiKey').value=lsGet('si_key')||'';
+$('#apiKey').onchange=e=>lsSet('si_key',e.target.value.trim());
+
+/* ---------- студия ---------- */
+function setTab(t){$$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));$$('.pane').forEach(p=>p.classList.toggle('on',p.id===t))}
+$('#tabs').onclick=e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.t)};
+function renderStudio(){
+  const s=st.story;if(!s)return;
+  $('#title').textContent=s.title;
+  $('#p1').innerHTML=s.scenes.map((sc,i)=>`<div class="scene" id="sc${i}"><div class="hd"><span>Сцена ${i+1}</span><button class="btn sec sm" data-say="${i}">▶ с этой сцены</button></div><textarea data-i="${i}">${esc(sc.text)}</textarea></div>`).join('');
+  $('#p2').innerHTML='<p class="hint" style="margin-top:0">Готовые промты для Veo, Runway, Kling, Sora, Pika, Hailuo и т. п. — по одному на сцену.</p>'+s.scenes.map((sc,i)=>`<div class="scene"><div class="hd"><span>Сцена ${i+1}</span><button class="btn sec sm" data-copy="#an${i}">Копировать</button></div><div class="prompt" id="an${i}">${esc(sc.anim)}</div></div>`).join('')+'<button class="btn sec sm" id="copyAll">Копировать все промты</button>';
+  $('#copyAll').onclick=e=>copyText(s.scenes.map((x,i)=>`Сцена ${i+1}: ${x.anim}`).join('\n\n'),e.target);
+  $('#vPrompt2').textContent=voicePrompt();
+  $$('#p1 textarea').forEach(t=>t.oninput=()=>{s.scenes[+t.dataset.i].text=t.value});
+  $$('[data-say]').forEach(b=>b.onclick=()=>{startPlay(+b.dataset.say)});
+  setFormat($('#vert').checked);drawFrame(0,0,0,false);
+}
+
+/* ---------- рисование героя и мира ---------- */
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function drawHero(x,px,py,S,walk,speaking,h,t){
+  const sw=Math.sin(walk)*26*S,bob=Math.abs(Math.sin(walk))*5*S;
+  x.save();x.lineCap='round';
+  x.fillStyle='#0003';x.beginPath();x.ellipse(px,py+2*S,40*S,9*S,0,0,7);x.fill();
+  const oc=COLORS_OUT[h.out].c,hc=COLORS_HAIR[h.hair].c,sk=SKINS[h.skin].c,y=py-bob;
+  x.strokeStyle='#23283a';x.lineWidth=17*S;
+  x.beginPath();x.moveTo(px-9*S,y-92*S);x.lineTo(px-9*S+sw,py);x.moveTo(px+9*S,y-92*S);x.lineTo(px+9*S-sw,py);x.stroke();
+  x.strokeStyle='#111';x.lineWidth=11*S;x.beginPath();x.moveTo(px-9*S+sw,py);x.lineTo(px-9*S+sw+10*S,py);x.moveTo(px+9*S-sw,py);x.lineTo(px+9*S-sw+10*S,py);x.stroke();
+  x.strokeStyle=oc;x.lineWidth=13*S;
+  x.beginPath();x.moveTo(px-22*S,y-148*S);x.lineTo(px-26*S-sw*.6,y-104*S);x.stroke();
+  x.fillStyle=oc;x.beginPath();x.roundRect?x.roundRect(px-28*S,y-158*S,56*S,76*S,16*S):x.rect(px-28*S,y-158*S,56*S,76*S);x.fill();
+  x.fillStyle='#0002';x.fillRect(px-28*S,y-96*S,56*S,8*S);
+  x.strokeStyle=oc;x.lineWidth=13*S;x.beginPath();x.moveTo(px+22*S,y-148*S);x.lineTo(px+30*S+sw*.6,y-104*S);x.stroke();
+  x.fillStyle=sk;x.beginPath();x.arc(px-26*S-sw*.6,y-100*S,7*S,0,7);x.arc(px+30*S+sw*.6,y-100*S,7*S,0,7);x.fill();
+  if(h.acc){x.font=Math.round(34*S)+'px '+EMOJI_FONT;x.textAlign='center';x.textBaseline='middle';x.fillText(h.acc,px+40*S+sw*.6,y-108*S)}
+  x.fillStyle=sk;x.fillRect(px-7*S,y-170*S,14*S,16*S);
+  x.beginPath();x.arc(px,y-190*S,30*S,0,7);x.fill();
+  x.fillStyle=hc;x.beginPath();x.arc(px,y-193*S,31*S,Math.PI*1.02,Math.PI*1.98);x.fill();
+  if(h.gender==='f'){x.fillRect(px-32*S,y-196*S,10*S,46*S);x.fillRect(px+22*S,y-196*S,10*S,46*S)}else{x.fillRect(px-31*S,y-196*S,62*S,12*S)}
+  x.fillStyle='#111';x.beginPath();x.arc(px+10*S,y-190*S,3.4*S,0,7);x.arc(px+22*S,y-190*S,3.4*S,0,7);x.fill();
+  x.strokeStyle='#111';x.lineWidth=2.4*S;x.beginPath();
+  if(speaking){const m=Math.abs(Math.sin(t*14))*6*S+2*S;x.fillStyle='#5a1a1a';x.ellipse(px+16*S,y-175*S,5*S,m,0,0,7);x.fill()}
+  else{x.moveTo(px+9*S,y-176*S);x.quadraticCurveTo(px+16*S,y-172*S,px+23*S,y-177*S);x.stroke()}
+  x.restore();
+}
+function prepScene(sc,gn){
+  const r=rng(sc.seed||7),W=1280,H=1280;
+  sc._st=[...Array(70)].map(()=>({x:r(),y:r()*.5,r:r()*1.6+.4,ph:r()*6}));
+  const mk=(h0,h1,w0,w1)=>{const a=[];let x=-.1;while(x<1.6){const w=(w0+r()*(w1-w0));a.push({x,w,h:h0+r()*(h1-h0),win:[...Array(12)].map(()=>r())});x+=w*.9+r()*.02}return a};
+  sc._far=mk(.1,.3,.05,.1);sc._near=mk(.14,.42,.07,.14);
+  sc._pp=sc.props.map(()=>({x:.12+r()*.78,s:.6+r()*.5}));
+  const kind=gn.fx;const n=kind==='none'?0:kind==='stars'?0:90;
+  sc._parts=[...Array(n)].map(()=>({x:r(),y:r(),v:.4+r()*.8,r:r()*2.2+.8,ph:r()*6}));
+}
+function drawParts(x,sc,gn,t,W,H,S){
+  const k=gn.fx;if(!sc._parts)return;
+  x.save();
+  for(const p of sc._parts){
+    let px=p.x*W,py=p.y*H;
+    if(k==='rain'){py=(p.y+t*p.v*1.4)%1*H;px=(p.x*W-t*p.v*60)%W;if(px<0)px+=W;x.strokeStyle='rgba(180,210,255,.45)';x.lineWidth=1.3*S;x.beginPath();x.moveTo(px,py);x.lineTo(px-7*S,py+22*S);x.stroke()}
+    else if(k==='snow'){py=(p.y+t*p.v*.1)%1*H;px=(p.x*W+Math.sin(t*p.v+p.ph)*30*S)%W;x.fillStyle='rgba(255,255,255,.8)';x.beginPath();x.arc(px,py,p.r*S*1.2,0,7);x.fill()}
+    else if(k==='embers'){py=H-((p.y+t*p.v*.12)%1)*H;px=(p.x*W+Math.sin(t*p.v*2+p.ph)*24*S+W)%W;x.fillStyle=`rgba(255,${130+p.ph*18|0},40,${.35+.4*Math.sin(t*3+p.ph)**2})`;x.beginPath();x.arc(px,py,p.r*S,0,7);x.fill()}
+    else if(k==='dust'){px=(p.x*W+t*p.v*40*S)%W;py=(p.y*H+Math.sin(t*p.v+p.ph)*16*S+H)%H;x.fillStyle='rgba(220,200,170,.22)';x.beginPath();x.arc(px,py,p.r*S*1.5,0,7);x.fill()}
+    else if(k==='bubbles'){py=H-((p.y+t*p.v*.1)%1)*H;px=(p.x*W+Math.sin(t*p.v+p.ph)*20*S)%W;x.strokeStyle='rgba(200,240,255,.45)';x.lineWidth=1.5*S;x.beginPath();x.arc(px,py,p.r*S*3,0,7);x.stroke()}
+  }
+  x.restore();
+}
+function drawWorld(x,sc,gn,i,p,t,speaking,W,H,S,hh){
+  const gY=H*(W>H?.72:.64),dark=gn.dark;
+  const g1=x.createLinearGradient(0,0,0,gY);g1.addColorStop(0,gn.c[0]);g1.addColorStop(1,gn.c[1]);x.fillStyle=g1;x.fillRect(0,0,W,H);
+  if(gn.fx==='stars'||dark>.5||gn.sk==='space'){for(const s of sc._st){x.fillStyle=`rgba(255,255,255,${.35+.5*Math.sin(t*2+s.ph)**2})`;x.beginPath();x.arc(s.x*W,s.y*gY,s.r*S,0,7);x.fill()}}
+  if(gn.sk!=='interior'){const mx=W*.78,my=gY*.28,rg=x.createRadialGradient(mx,my,0,mx,my,150*S);rg.addColorStop(0,'rgba(255,240,200,.55)');rg.addColorStop(1,'rgba(255,240,200,0)');x.fillStyle=rg;x.fillRect(mx-160*S,my-160*S,320*S,320*S);x.fillStyle='rgba(255,245,215,.85)';x.beginPath();x.arc(mx,my,34*S,0,7);x.fill()}
+  const off=p*70*S;
+  if(gn.sk==='city'){
+    [['_far',.45,off*.4],['_near',.65,off]].forEach(([k,a,o])=>{for(const b of sc[k]){const bx=b.x*W-o,bw=b.w*W,bh=b.h*H*(W>H?1:.7);x.fillStyle=`rgba(0,0,0,${a})`;x.fillRect(bx,gY-bh,bw,bh);if(k==='_near'&&dark>.15){x.fillStyle='rgba(255,215,120,.75)';b.win.forEach((w,j)=>{if(w>.55&&Math.sin(t*.7+j*3+b.x*40)>-.6)x.fillRect(bx+8*S+(j%3)*bw/3.3,gY-bh+12*S+((j/3|0)*22*S),bw/6,10*S)})}}});
+  }else if(gn.sk==='forest'){
+    [['_far',.4,off*.4],['_near',.62,off]].forEach(([k,a,o])=>{for(const b of sc[k]){const bx=b.x*W-o,bw=b.w*W*1.3,bh=b.h*H*1.1*(W>H?1:.7);x.fillStyle=`rgba(0,0,0,${a})`;x.beginPath();x.moveTo(bx,gY);x.lineTo(bx+bw/2,gY-bh);x.lineTo(bx+bw,gY);x.fill()}});
+  }else if(gn.sk==='hills'){
+    [[.55,.45,.6,.9],[.35,.7,.4,1.3]].forEach(([al,hh2,sp,fr],k)=>{x.fillStyle=`rgba(0,0,0,${al})`;x.beginPath();x.moveTo(0,gY);for(let px=0;px<=W;px+=16)x.lineTo(px,gY-(60+k*40)*S-Math.sin((px+off*sp*(k+1))/(160*S/fr)+k*2)*40*S*hh2-Math.sin((px+off*sp)/(70*S))*10*S);x.lineTo(W,gY);x.fill()});
+  }else if(gn.sk==='space'){
+    x.fillStyle='rgba(120,160,255,.35)';x.beginPath();x.arc(W*.25-off*.3,gY*.62,110*S,0,7);x.fill();x.fillStyle='rgba(255,170,100,.3)';x.beginPath();x.arc(W*.6-off*.5,gY*.35,48*S,0,7);x.fill();
+  }else if(gn.sk==='interior'){
+    for(let k=0;k<9;k++){x.fillStyle=`rgba(0,0,0,${k%2?.28:.4})`;x.fillRect((k/9)*W-off*.5,0,W/9,gY)}
+    x.fillStyle='rgba(255,255,255,.07)';x.fillRect(0,gY*.18,W,10*S);
+  }
+  let gcol=gn.c[2];
+  x.fillStyle=gcol;x.fillRect(0,gY,W,H-gY);
+  if(gn.sk==='water'){x.fillStyle='rgba(255,255,255,.12)';for(let k=0;k<26;k++){const wx=((k*173+t*30*(1+k%3))%(W+100))-50,wy=gY+14*S+(k*37%(H-gY-20*S));x.fillRect(wx,wy,50*S,3*S)}x.fillStyle='rgba(0,0,0,.12)';x.fillRect(0,gY,W,5*S)}
+  else{x.fillStyle='rgba(255,255,255,.1)';x.fillRect(0,gY,W,4*S);const gr=x.createLinearGradient(0,gY,0,H);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.35)');x.fillStyle=gr;x.fillRect(0,gY,W,H-gY)}
+  const feet=gY+(H-gY)*.38;
+  x.textAlign='center';x.textBaseline='alphabetic';
+  sc._pp.forEach((pp,k)=>{x.font=Math.round(70*pp.s*S)+'px '+EMOJI_FONT;x.fillText(sc.props[k],((pp.x*W-off*1.2)%W+W)%W,gY+(H-gY)*(.3+.12*pp.s))});
+  const heroX=W*([.2,.28,.36,.45,.52,.64][Math.min(i,5)]+.08*p);
+  const L=sc.level*(.4+.6*Math.min(1,p*1.4));
+  const nT=sc.threat?1+Math.round(sc.level*3):0;
+  const walking=!speaking||sc.level>.7;
+  const drawT=()=>{for(let k=0;k<nT;k++){const fs=(120-k*16)*S,tx=W*(1.12-L*.38)+k*(W>H?95:55)*S-Math.sin(t*2+k)*6*S,ty=feet-(k%2)*18*S+Math.sin(t*5+k*2)*5*S;x.font=Math.round(fs)+'px '+EMOJI_FONT;x.textAlign='center';x.fillText(sc.threat,tx,ty-8*S)}};
+  drawHero(x,heroX,feet,S*1.0*(W>H?1.15:1),walking?t*6:0,speaking,hh,t);
+  drawT();
+  if(gn.sk==='city'||gn.sk==='interior'){}
+  drawParts(x,sc,gn,t,W,H,S);
+  return {heroX,feet};
+}
+function drawOverlay(x,sc,gn,p,t,W,H,S,pos){
+  if(sc.flash){const f=Math.sin(t*9)*Math.sin(t*2.3);if(f>.93){x.fillStyle='rgba(255,255,255,.55)';x.fillRect(0,0,W,H)}}
+  const d=Math.min(.95,gn.dark+(sc.level>.7?.12:0));
+  if(d>.05){const r=(W>H?330:300)*S,gr=x.createRadialGradient(pos.heroX+40*S,pos.feet-120*S,r*.12,pos.heroX+40*S,pos.feet-120*S,r);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,`rgba(0,0,0,${d})`);x.fillStyle=gr;x.fillRect(0,0,W,H);x.fillStyle=`rgba(0,0,0,${d*.3})`;x.fillRect(0,0,W,H)}
+  const v=x.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=v;x.fillRect(0,0,W,H);
+}
+function wrapWords(x,words,maxW){
+  const lines=[[]];let w0=0;const sp=x.measureText(' ').width;
+  words.forEach(o=>{const w=x.measureText(o.w).width;if(w0+w>maxW&&lines[lines.length-1].length){lines.push([]);w0=0}lines[lines.length-1].push({o,w});w0+=w+sp});
+  return lines;
+}
+function drawSubs(x,sc,wordIdx,W,H,S){
+  const words=sc._words;if(!words)return;
+  const CH=W>H?11:7;const ci=Math.floor(Math.max(0,wordIdx)/CH),chunk=words.slice(ci*CH,ci*CH+CH);
+  const fs=Math.round((W>H?36:34)*S);x.font='700 '+fs+'px system-ui,"Segoe UI",Roboto,sans-serif';x.textBaseline='middle';x.textAlign='left';
+  const maxW=W*(W>H?.8:.86),lines=wrapWords(x,chunk,maxW),sp=x.measureText(' ').width,lh=fs*1.35;
+  const bh=lines.length*lh+22*S,by=H-bh-(W>H?34:90)*S;
+  const bw=Math.max(...lines.map(l=>l.reduce((a,c)=>a+c.w+sp,-sp)))+44*S;
+  x.fillStyle='rgba(0,0,0,.62)';x.beginPath();x.roundRect?x.roundRect((W-bw)/2,by,bw,bh,16*S):x.rect((W-bw)/2,by,bw,bh);x.fill();
+  lines.forEach((l,li)=>{const tw=l.reduce((a,c)=>a+c.w+sp,-sp);let px=(W-tw)/2;const py=by+11*S+lh*(li+.5);
+    l.forEach(c=>{const idx=words.indexOf(c.o);x.fillStyle=idx<wordIdx?'#fff':idx===wordIdx?'#ffd23f':'rgba(255,255,255,.45)';x.fillText(c.o.w,px,py);if(idx===wordIdx){x.fillRect(px,py+fs*.55,c.w,3*S)}px+=c.w+sp})});
+}
+function drawFrame(i,p,t,speaking,wordIdx){
+  const s=st.story;if(!s)return;
+  const sc=s.scenes[i],gn=st.genre;if(!sc._st)prepScene(sc,gn);
+  const x=cv.getContext('2d');x.save();
+  const z=1+.07*p,sh=sc.level>.75?Math.sin(t*40)*3*S0:0;
+  x.translate(W/2+sh,H/2);x.scale(z,z);x.translate(-W/2,-H/2);
+  const pos=drawWorld(x,sc,gn,i,p,t,speaking,W,H,S0,st.hero);
+  x.restore();
+  drawOverlay(x,sc,gn,p,t,W,H,S0,pos);
+  const bar=Math.round(46*S0*(W>H?.5:.3));x.fillStyle='#000';x.fillRect(0,0,W,bar);x.fillRect(0,H-bar,W,bar);
+  x.fillStyle='rgba(255,255,255,.85)';x.fillRect(0,0,W*((i+p)/s.scenes.length),4*S0);
+  if(t<2.2&&i>=0){const a=Math.min(1,t*2,(2.2-t)*2);x.save();x.globalAlpha=Math.max(0,a);x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';x.shadowColor='#000';x.shadowBlur=12*S0;x.font='800 '+Math.round(54*S0)+'px system-ui,sans-serif';x.fillText(i===0?s.title:'Сцена '+(i+1),W/2,H*.2);x.restore()}
+  drawSubs(x,sc,wordIdx===undefined?-1:wordIdx,W,H,S0);
+}
+
+/* ---------- проигрыватель ---------- */
+const cv=$('#cv');let W=1280,H=720,S0=1;
+function setFormat(v){W=v?720:1280;H=v?1280:720;S0=v?.9:1;cv.width=W;cv.height=H;$('#stage').classList.toggle('vert',v);if(st.story&&!P.on)drawFrame(P.i,0,0,false,-1)}
+$('#vert').onchange=e=>setFormat(e.target.checked);
+const P={on:false,i:0,t0:0,wi:-1,dur:6,speaking:false,boundary:false,timed:false,done:false,gen:0,onFinish:null,raf:0,ended:0,safety:0};
+function splitWords(text){const a=[],re=/\S+/g;let m;while((m=re.exec(text)))a.push({w:m[0],c:m.index});return a}
+function startPlay(from){
+  const s=st.story;if(!s)return;stopPlay();
+  P.on=true;P.done=false;P.gen++;beginScene(from||0);
+  $('#play').textContent='⏸ Пауза';
+  cancelAnimationFrame(P.raf);P.raf=requestAnimationFrame(loop);
+}
+function beginScene(i){
+  const s=st.story,sc=s.scenes[i];if(!sc._st)prepScene(sc,st.genre);
+  sc._words=splitWords(sc.text);P.i=i;P.t0=performance.now();P.wi=-1;P.boundary=false;P.speaking=false;P.timed=false;P.ended=0;
+  const rate=st.voice.rate||1;P.dur=Math.max(4,sc._words.length*.4/rate+.8);
+  $$('.scene').forEach(e=>e.classList.remove('act'));const el=$('#sc'+i);if(el){el.classList.add('act');try{el.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}}
+  const gen=P.gen;
+  if($('#narr').checked){
+    cancelSpeech();
+    const u=speak(sc.text,{start(){if(gen===P.gen){P.speaking=true}},boundary(ci){if(gen!==P.gen)return;P.boundary=true;let k=0;sc._words.forEach((w,j)=>{if(w.c<=ci)k=j});P.wi=k},end(){if(gen===P.gen&&P.i===i&&P.speaking){P.speaking=false;P.wi=sc._words.length;P.ended=performance.now()}},nostart(){P.timed=true}});
+    if(!u)P.timed=true;
+    clearTimeout(P.safety);P.safety=setTimeout(()=>{if(gen===P.gen&&P.i===i&&!P.speaking&&!P.ended&&!P.boundary){P.timed=true}},2500);
+  }else P.timed=true;
+}
+function nextScene(){
+  const s=st.story;
+  if(P.i+1>=s.scenes.length){finish();return}
+  beginScene(P.i+1);
+}
+function finish(){
+  P.on=false;P.done=true;cancelSpeech();$('#play').textContent='▶ Ещё раз';
+  const x=cv.getContext('2d');x.fillStyle='rgba(0,0,0,.6)';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';x.font='800 '+Math.round(64*S0)+'px system-ui,sans-serif';x.fillText('КОНЕЦ',W/2,H/2);
+  x.font='500 '+Math.round(26*S0)+'px system-ui,sans-serif';x.fillText(st.story.title,W/2,H/2+60*S0);
+  if(P.onFinish){const f=P.onFinish;P.onFinish=null;setTimeout(f,600)}
+}
+function stopPlay(){P.on=false;P.gen++;clearTimeout(P.safety);cancelAnimationFrame(P.raf);cancelSpeech();const b=$('#play');if(b)b.textContent=P.done?'▶ Ещё раз':'▶ Смотреть'}
+function loop(now){
+  if(!P.on)return;
+  const s=st.story,sc=s.scenes[P.i],el=(now-P.t0)/1000;
+  const nw=sc._words.length;
+  if(P.timed||(!P.speaking&&!P.ended&&!P.boundary&&el>.1&&!$('#narr').checked)){P.wi=Math.min(nw-1,Math.floor(el/P.dur*nw*1.0));}
+  else if(P.speaking&&!P.boundary){P.wi=Math.min(nw-1,Math.floor(el/P.dur*nw))}
+  const p=Math.min(1,el/P.dur);
+  drawFrame(P.i,p,el+P.i*3,P.speaking,P.wi);
+  if(P.timed&&el>P.dur+.4)nextScene();
+  else if(P.ended&&now-P.ended>650)nextScene();
+  else if(!P.timed&&el>P.dur*3+6)nextScene();
+  P.raf=requestAnimationFrame(loop);
+}
+$('#play').onclick=()=>{
+  if(P.on){P.on=false;P.paused=true;cancelSpeech();clearTimeout(P.safety);$('#play').textContent='▶ Продолжить';return}
+  startPlay(P.paused&&!P.done?P.i:0);P.paused=false;
+};
+$('#stop').onclick=()=>{P.paused=false;P.done=false;stopPlay();if(st.story)drawFrame(0,0,0,false,-1)};
+$('#narr').onchange=()=>{if(P.on){beginScene(P.i)}};
+
+/* ---------- запись и экспорт ---------- */
+async function record(withAudio){
+  if(!window.MediaRecorder||!cv.captureStream){alert('Этот браузер не умеет записывать canvas. Используй Chrome или экспорт «HTML-видео».');return}
+  const stream=cv.captureStream(30);
+  if(withAudio){try{const d=await navigator.mediaDevices.getDisplayMedia({video:{displaySurface:'browser'},audio:true,preferCurrentTab:true});d.getAudioTracks().forEach(t=>stream.addTrack(t));d.getVideoTracks().forEach(t=>t.stop());}catch(e){alert('Звук вкладки не подключён — запишу без звука.')}}
+  const types=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'];
+  const mime=types.find(t=>MediaRecorder.isTypeSupported(t))||'';
+  const rec=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:5e6}:{}),chunks=[];
+  rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+  rec.onstop=()=>{const b=new Blob(chunks,{type:rec.mimeType||'video/webm'});dl(b,(st.story.title.replace(/[^\wа-яё]+/gi,'_')||'video')+(b.type.includes('mp4')?'.mp4':'.webm'));$('#rec').disabled=$('#recA').disabled=false;$('#rec').textContent='⏺ Записать видео (.webm)'};
+  $('#rec').disabled=$('#recA').disabled=true;$('#rec').textContent='⏺ Идёт запись…';
+  rec.start(500);P.onFinish=()=>rec.stop();startPlay(0);
+}
+$('#rec').onclick=()=>record(false);
+$('#recA').onclick=()=>record(true);
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000)}
+$('#expJson').onclick=()=>dl(new Blob([JSON.stringify(project(),null,2)],{type:'application/json'}),'story-project.json');
+function project(){const s=JSON.parse(JSON.stringify(st.story,(k,v)=>k[0]==='_'?undefined:v));return {genre:st.genre,hero:st.hero,voice:st.voice,story:s}}
+$('#expHtml').onclick=async()=>{
+  let src='';
+  try{const r=await fetch(location.href.split('#')[0]);if(r.ok)src=await r.text()}catch(e){}
+  if(!src||!/id="s4"/.test(src))src='<!doctype html>\n'+document.documentElement.outerHTML;
+  const data='window.__PRESET__='+JSON.stringify(project()).replace(/</g,'\\u003c')+';';
+  src=src.replace(/<head>/i,'<head><script>'+data+'<\/script>');
+  dl(new Blob([src],{type:'text/html'}),'video-'+(st.story.title.replace(/[^\wа-яё]+/gi,'_'))+'.html');
+};
+
+/* ---------- старт ---------- */
+renderGrid();renderHeroForm();syncVoiceUI();
+if(window.__PRESET__){
+  const p=window.__PRESET__;st.genre=p.genre;Object.assign(st.hero,p.hero);Object.assign(st.voice,p.voice);st.story=p.story;
+  document.body.classList.add('solo');go(4);setTab('p1');renderStudio();
+  window.__readyStory=true;
+}
+window.__app={st,go,startPlay,stopPlay,runAgent,renderStudio};
+})();
+</script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
+</body>
+</html>
