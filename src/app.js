@@ -16,7 +16,8 @@ const st={
   voice:{preset:'narrator',sys:'',pitch:1,rate:1},
   story:null
 };
-try{const h=JSON.parse(lsGet('si_hero')||'null');if(h)Object.assign(st.hero,h)}catch(e){}
+st.comp={on:true,name:'Лена',gender:'f',age:11,prof:'школьница',trait:'Добрый',out:1,hair:3,skin:0,acc:'🎒'};
+try{const h=JSON.parse(lsGet('si_hero')||'null');if(h)Object.assign(st.hero,h);const c=JSON.parse(lsGet('si_comp')||'null');if(c)Object.assign(st.comp,c)}catch(e){}
 const g=(m,f)=>st.hero.gender==='f'?f:m;
 
 /* ---------- навигация ---------- */
@@ -73,6 +74,23 @@ function customGenre(t){
    twist:'Всё оказывается не тем, чем казалось в начале',threat:'❓',props:['✨','🗺️','🔮']};
 }
 
+
+/* ---------- генератор персонажей (мальчик / девочка) ---------- */
+const NAMES={m:['Алекс','Миша','Данил','Артём','Ваня','Макс','Тимур','Егор','Кирилл','Никита','Лёша','Рома'],f:['Лена','Маша','Соня','Аня','Ева','Алиса','Полина','Катя','Мира','Даша','Лиза','Вера']};
+const ADULT_PROF=['Механик','Врач','Журналист','Курьер','Учитель','Охотник','Программист','Повар','Бывший военный'];
+const groupOf=a=>a<14?'child':a<18?'teen':'adult';
+const AGES={child:9,teen:15,adult:28};
+function setGroup(o,grp){o.age=AGES[grp];fixProf(o)}
+function fixProf(o){const g=groupOf(o.age);if(g==='child')o.prof=o.gender==='f'?'школьница':'школьник';else if(g==='teen')o.prof='подросток';else if(/школьн|подросток/i.test(o.prof))o.prof=pick(ADULT_PROF)}
+function randChar(o,gender,grp){
+  o.gender=gender||pick(['m','f']);
+  const nm=pick(NAMES[o.gender]);o.name=nm;
+  o.age=grp?AGES[grp]+(grp==='child'?Math.floor(Math.random()*4)-1:grp==='teen'?Math.floor(Math.random()*3):Math.floor(Math.random()*15)):o.age;
+  o.trait=pick(Object.keys(TRAITS));o.out=Math.floor(Math.random()*COLORS_OUT.length);o.hair=Math.floor(Math.random()*COLORS_HAIR.length);o.skin=Math.floor(Math.random()*SKINS.length);
+  o.acc=pick(['🔦','🔧','📷','🎒','🧭','🪄','📞','🪓']);fixProf(o);
+}
+function ageScale(a){return a<14?.8:a<18?.92:1}
+
 /* ---------- 2. герой ---------- */
 function chips(el,items,key,fmt){
   el.innerHTML=items.map(it=>`<span class="chip${st.hero[key]===it?' on':''}" data-v="${esc(it)}">${esc(fmt?fmt(it):it)}</span>`).join('');
@@ -86,6 +104,9 @@ function renderHeroForm(){
   const h=st.hero;
   $('#hName').value=h.name;$('#hAge').value=h.age;$('#hProf').value=h.prof;$('#hAcc').value=h.acc;$('#hCatch').value=h.catch;
   $$('#hGender .chip').forEach(c=>c.classList.toggle('on',c.dataset.v===h.gender));
+  $('#hAgeQ').innerHTML=[['child','Ребёнок'],['teen','Подросток'],['adult','Взрослый']].map(([k,l])=>`<span class="chip${groupOf(h.age)===k?' on':''}" data-v="${k}">${l}</span>`).join('');
+  $('#hAgeQ').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;setGroup(h,c.dataset.v);saveHero();renderHeroForm()};
+  renderCompForm();
   chips($('#hTrait'),Object.keys(TRAITS),'trait');
   swatches($('#hOut'),COLORS_OUT,'out');swatches($('#hHair'),COLORS_HAIR,'hair');swatches($('#hSkin'),SKINS,'skin');
   chips($('#hTone'),Object.keys(TONES),'tone',k=>TONES[k].n);
@@ -95,19 +116,45 @@ function renderHeroForm(){
   $('#hAccQ').onclick=e=>{const c=e.target.closest('.chip');if(c){h.acc=c.dataset.v;saveHero();renderHeroForm()}};
   drawPreview();
 }
+
+function renderCompForm(){
+  const c=st.comp,box=$('#cmpBox');if(!box)return;
+  const chips=(arr,cur,key)=>arr.map(([v,l])=>`<span class="chip${cur===v?' on':''}" data-k="${key}" data-v="${v}">${l}</span>`).join('');
+  const sw=(arr,key)=>arr.map((x,i)=>`<span class="sw${c[key]===i?' on':''}" data-k="${key}" data-v="${i}" style="background:${x.c}"></span>`).join('');
+  box.innerHTML=`<div class="row" style="justify-content:space-between"><b>👭 Второй персонаж (диалоги)</b><label class="chip"><input type="checkbox" id="cOn" ${c.on?'checked':''}> включить</label></div>
+  <div class="${c.on?'':'dim'}" id="cBody" style="${c.on?'':'opacity:.4;pointer-events:none'}">
+   <div class="two" style="margin-top:10px"><div class="field"><label>Кто</label><div class="chips">${chips([['f','👧 Девочка / девушка'],['m','👦 Мальчик / парень']],c.gender,'gender')}</div></div>
+   <div class="field"><label>Возраст</label><div class="chips">${chips([['child','Ребёнок'],['teen','Подросток'],['adult','Взрослый']],groupOf(c.age),'grp')}</div></div></div>
+   <div class="two"><div class="field"><label>Имя</label><input type="text" id="cName" maxlength="20" value="${esc(c.name)}"></div>
+   <div class="field"><label>Предмет</label><div class="chips">${['🎒','📷','🧸','🔦','🪄','📞'].map(x=>`<span class="chip${c.acc===x?' on':''}" data-k="acc" data-v="${x}">${x}</span>`).join('')}</div></div></div>
+   <div class="field"><label>Характер</label><div class="chips">${chips(Object.keys(TRAITS).map(k=>[k,k]),c.trait,'trait')}</div></div>
+   <div class="two"><div class="field"><label>Одежда</label><div class="chips">${sw(COLORS_OUT,'out')}</div></div><div class="field"><label>Волосы</label><div class="chips">${sw(COLORS_HAIR,'hair')}</div></div></div>
+   <button class="btn sec sm" id="cRand">🎲 Случайный персонаж</button></div>`;
+  $('#cOn').onchange=e=>{c.on=e.target.checked;saveHero();renderCompForm()};
+  box.onclick=e=>{const t=e.target.closest('[data-k]');if(!t)return;const k=t.dataset.k,v=t.dataset.v;
+    if(k==='gender'){c.gender=v;if(NAMES[v].indexOf(c.name)<0)c.name=pick(NAMES[v]);fixProf(c)}
+    else if(k==='grp')setGroup(c,v);else if(['out','hair','skin'].includes(k))c[k]=+v;else c[k]=v;
+    saveHero();renderCompForm();drawPreview()};
+  $('#cName').oninput=e=>{c.name=e.target.value||'Друг';saveHero();drawPreview()};
+  $('#cRand').onclick=()=>{randChar(c,null,groupOf(c.age));saveHero();renderCompForm();drawPreview()};
+}
+
 $('#hName').oninput=e=>{st.hero.name=e.target.value||'Герой';saveHero();drawPreview()};
 $('#hAge').oninput=e=>{st.hero.age=Math.max(5,Math.min(99,+e.target.value||20));saveHero()};
 $('#hProf').oninput=e=>{st.hero.prof=e.target.value||'Путник';saveHero()};
 $('#hAcc').oninput=e=>{st.hero.acc=e.target.value;saveHero();drawPreview()};
 $('#hCatch').oninput=e=>{st.hero.catch=e.target.value;saveHero()};
-$('#hGender').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;st.hero.gender=c.dataset.v;saveHero();renderHeroForm()};
-function saveHero(){lsSet('si_hero',JSON.stringify(st.hero))}
+$('#hGender').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;st.hero.gender=c.dataset.v;fixProf(st.hero);saveHero();renderHeroForm()};
+$('#hRand').onclick=()=>{randChar(st.hero,null,groupOf(st.hero.age));saveHero();renderHeroForm()};
+function saveHero(){lsSet('si_hero',JSON.stringify(st.hero));lsSet('si_comp',JSON.stringify(st.comp))}
 function drawPreview(){
-  const c=$('#pv');if(!c||!st.genre&&false)return;const x=c.getContext('2d'),gn=st.genre||GENRES[0];
+  const c=$('#pv');if(!c)return;const x=c.getContext('2d'),gn=st.genre||GENRES[0];
   const gr=x.createLinearGradient(0,0,0,c.height);gr.addColorStop(0,gn.c[0]);gr.addColorStop(1,gn.c[1]);x.fillStyle=gr;x.fillRect(0,0,c.width,c.height);
   x.fillStyle=gn.c[2];x.fillRect(0,270,c.width,90);
-  drawHero(x,150,320,1.15,0,false,st.hero,0);
-  $('#pvName').textContent=st.hero.name+' · '+st.hero.prof;
+  const t=performance.now()/1000;
+  if(st.comp.on)drawHero(x,205,322,1.05*ageScale(st.comp.age),0,false,st.comp,t);
+  drawHero(x,st.comp.on?100:150,320,1.15*ageScale(st.hero.age),0,false,st.hero,t);
+  $('#pvName').textContent=st.hero.name+(st.comp.on?' и '+st.comp.name:'')+' · '+st.hero.prof;
 }
 
 /* ---------- 3. голос ---------- */
@@ -138,13 +185,15 @@ $('#vPlay').onclick=()=>{cancelSpeech();speak($('#vTest').value||'Проверк
 function voicePrompt(){
   const p=VOICES[st.voice.preset],v=st.voice,h=st.hero,tn=TONES[h.tone];
   const pitch=v.pitch<.8?'низкий':v.pitch>1.25?'высокий':'средний',rate=v.rate<.9?'медленный':v.rate>1.12?'быстрый':'средний';
-  return `ГОЛОС ДЛЯ ОЗВУЧКИ\nХарактер: ${p.n} — ${p.ru}.\nВысота: ${pitch}. Темп: ${rate}. Подача: ${tn.n.toLowerCase()}.\nЯзык: русский, чёткая дикция, паузы на запятых и точках.\nЖанр истории: ${st.genre?st.genre.n:'—'}.\n\nENGLISH (for ElevenLabs / Voice Design):\n"${p.en}; ${tn.en.split(',')[0]} delivery; ${pitch==='низкий'?'low':pitch==='высокий'?'high':'medium'} pitch, ${rate==='медленный'?'slow':rate==='быстрый'?'fast':'moderate'} pace; native Russian speaker, clear diction, natural pauses."`;
+  const cv_=o=>{const k=groupOf(o.age),g=o.gender==='f';return (k==='child'?(g?'high bright girl voice, 9-12 years old':'light boyish voice, 9-12 years old'):k==='teen'?(g?'young teenage girl, energetic':'teenage boy, slightly cracking'):(g?'adult woman, warm':'adult man, steady'))};
+  const chars=`\n\nГОЛОСА ПЕРСОНАЖЕЙ (диалоги):\n${st.hero.name} — ${cv_(st.hero)}.`+(st.comp.on?`\n${st.comp.name} — ${cv_(st.comp)}.`:'');
+  return `ГОЛОС ДЛЯ ОЗВУЧКИ\nХарактер: ${p.n} — ${p.ru}.\nВысота: ${pitch}. Темп: ${rate}. Подача: ${tn.n.toLowerCase()}.\nЯзык: русский, чёткая дикция, паузы на запятых и точках.\nЖанр истории: ${st.genre?st.genre.n:'—'}.\n\nENGLISH (for ElevenLabs / Voice Design):\n"${p.en}; ${tn.en.split(',')[0]} delivery; ${pitch==='низкий'?'low':pitch==='высокий'?'high':'medium'} pitch, ${rate==='медленный'?'slow':rate==='быстрый'?'fast':'moderate'} pace; native Russian speaker, clear diction, natural pauses."`+chars;
 }
-function pickSysVoice(){
+function pickSysVoice(wg){
   if(!sysVoices.length)return null;
-  if(st.voice.sys){const v=sysVoices.find(x=>x.name===st.voice.sys);if(v)return v}
+  if(!wg&&st.voice.sys){const v=sysVoices.find(x=>x.name===st.voice.sys);if(v)return v}
   let list=sysVoices.filter(v=>/^ru/i.test(v.lang));if(!list.length)list=sysVoices;
-  const want=VOICES[st.voice.preset].g;
+  const want=wg||VOICES[st.voice.preset].g;
   const fe=/female|жен|milena|alena|irina|anna|katya|svetlana|tatyana|elena/i,ma=/(^|[^a-z])male|муж|yuri|pavel|maxim|dmitry|aleksandr|nikolay/i;
   const m=list.find(v=>(want==='f'?fe:ma).test(v.name));
   return m||list[0];
@@ -153,11 +202,14 @@ function pickSysVoice(){
 /* ---------- речь ---------- */
 let curUtter=null;
 function cancelSpeech(){try{if('speechSynthesis' in window)speechSynthesis.cancel()}catch(e){}curUtter=null}
-function speak(text,cb){
+function speak(text,cb,who){
   if(!('speechSynthesis' in window)){cb.nostart&&cb.nostart();return null}
   const u=new SpeechSynthesisUtterance(text);
-  const v=pickSysVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang='ru-RU';
-  u.pitch=st.voice.pitch;u.rate=st.voice.rate;
+  let wg=null,pi=st.voice.pitch,ra=st.voice.rate;
+  if(who==='H'||who==='C'){const o=who==='H'?st.hero:st.comp,k=groupOf(o.age);wg=o.gender;
+    pi=o.gender==='f'?(k==='child'?1.6:k==='teen'?1.4:1.25):(k==='child'?1.45:k==='teen'?1.2:.95);ra=k==='child'?1.08:1;if(who==='C'&&st.comp.gender===st.hero.gender)pi+=.12}
+  const v=pickSysVoice(wg);if(v){u.voice=v;u.lang=v.lang}else u.lang='ru-RU';
+  u.pitch=pi;u.rate=ra;
   u.onstart=()=>cb.start&&cb.start();
   u.onboundary=ev=>{if(cb.boundary&&(ev.name===undefined||ev.name==='word'))cb.boundary(ev.charIndex)};
   u.onend=()=>cb.end&&cb.end();
@@ -167,11 +219,12 @@ function speak(text,cb){
 
 /* ---------- агент: сценарий ---------- */
 const BEATS_UNUSED=['calm before the storm','sudden danger appears','determined journey begins','tense confrontation with the obstacle','shocking twist and climactic moment','hopeful ending, new dawn'];
-function heroEn(){const h=st.hero;return `a ${TRAITS[h.trait].en} ${h.gender==='f'?'woman':'man'}, ${h.age} years old, ${h.prof}, wearing ${COLORS_OUT[h.out].en} clothes, ${COLORS_HAIR[h.hair].en} hair, holding ${h.acc}`}
+function heroEn(){const h=st.hero;return `a ${TRAITS[h.trait].en} ${h.gender==='f'?'woman':'man'}, ${h.age} years old, ${h.prof}, wearing ${COLORS_OUT[h.out].en} clothes, ${COLORS_HAIR[h.hair].en} hair, holding ${h.acc}`+(st.comp.on?`, together with a ${st.comp.age} year old ${st.comp.gender==='f'?'girl':'boy'} in ${COLORS_OUT[st.comp.out].en} clothes, ${COLORS_HAIR[st.comp.hair].en} hair`:'')}
 function localStory(gn,seed){
   const h=st.hero;
   const hero=Object.assign({},h,{traitAdj:TRAITS[h.trait].m,heroEn:heroEn(),prof:h.prof||'путник'});
-  return Engine.generate(gn,hero,h.tone,{scenes:+h.len||6,seed:seed});
+  const comp=st.comp.on?Object.assign({},st.comp,{traitAdj:TRAITS[st.comp.trait].m}):null;
+  return Engine.generate(gn,hero,h.tone,{scenes:+h.len||6,seed:seed,comp:comp});
 }
 async function aiStory(gn,key){
   const h=st.hero;
@@ -265,6 +318,7 @@ function prepScene(sc,gn){
   const kind=gn.fx;const n=kind==='none'?0:kind==='stars'?0:90;
   sc._parts=[...Array(n)].map(()=>({x:r(),y:r(),v:.4+r()*.8,r:r()*2.2+.8,ph:r()*6}));
 }
+function spkWho(sp){return sp&&sp.who?sp.who:''}
 function drawParts(x,sc,gn,t,W,H,S){
   const k=gn.fx;if(!sc._parts)return;
   x.save();
@@ -310,7 +364,9 @@ function drawWorld(x,sc,gn,i,p,t,speaking,W,H,S,hh){
   const walking=act==='walk'||act==='run'||act==='pick';
   const drawT=()=>{for(let k=0;k<nT;k++){const fs=(120-k*16)*S,tx=W*(1.12-L*.38)+k*(W>H?95:55)*S-Math.sin(t*2+k)*6*S,ty=feet-(k%2)*18*S+Math.sin(t*5+k*2)*5*S;x.font=Math.round(fs)+'px '+EMOJI_FONT;x.textAlign='center';x.fillText(sc.threat,tx,ty-8*S)}};
   const hs=S*(W>H?1.15:1)*(act==='hide'?.78:1),wph=act==='run'?t*12:act==='fight'?t*15:act==='hurt'?Math.sin(t*20)*1.2:walking?t*6:0;
-  drawHero(x,heroX+(act==='fight'?Math.sin(t*6)*18*S:0),feet+(act==='hide'?10*S:0),hs,wph,speaking,hh,t);
+  const sw0=spkWho(speaking);
+  if(st.comp.on){const cs=S*(W>H?1.05:.95)*ageScale(st.comp.age)*(act==='hide'?.78:1);drawHero(x,heroX-(W>H?95:70)*S,feet+8*S,cs,wph*1.1+1,sw0==='C',st.comp,t)}
+  drawHero(x,heroX+(act==='fight'?Math.sin(t*6)*18*S:0),feet+(act==='hide'?10*S:0),hs*ageScale(hh.age),wph,sw0==='H',hh,t);
   drawT();
   if(gn.sk==='city'||gn.sk==='interior'){}
   drawParts(x,sc,gn,t,W,H,S);
@@ -327,14 +383,15 @@ function wrapWords(x,words,maxW){
   words.forEach(o=>{const w=x.measureText(o.w).width;if(w0+w>maxW&&lines[lines.length-1].length){lines.push([]);w0=0}lines[lines.length-1].push({o,w});w0+=w+sp});
   return lines;
 }
-function drawSubs(x,sc,wordIdx,W,H,S){
-  const words=sc._words;if(!words)return;
+function drawSubs(x,spk,wordIdx,W,H,S){
+  if(!spk||!spk.words)return;const words=spk.words;
   const CH=W>H?11:7;const ci=Math.floor(Math.max(0,wordIdx)/CH),chunk=words.slice(ci*CH,ci*CH+CH);
   const fs=Math.round((W>H?36:34)*S);x.font='700 '+fs+'px system-ui,"Segoe UI",Roboto,sans-serif';x.textBaseline='middle';x.textAlign='left';
   const maxW=W*(W>H?.8:.86),lines=wrapWords(x,chunk,maxW),sp=x.measureText(' ').width,lh=fs*1.35;
   const bh=lines.length*lh+22*S,by=H-bh-(W>H?34:90)*S;
   const bw=Math.max(...lines.map(l=>l.reduce((a,c)=>a+c.w+sp,-sp)))+44*S;
   x.fillStyle='rgba(0,0,0,.62)';x.beginPath();x.roundRect?x.roundRect((W-bw)/2,by,bw,bh,16*S):x.rect((W-bw)/2,by,bw,bh);x.fill();
+  if(spk.who!=='N'&&spk.name){const col=spk.who==='H'?'#7ad7ff':'#ff9ad5';x.font='800 '+Math.round(fs*.62)+'px system-ui,sans-serif';const tw=x.measureText(spk.name).width+26*S;x.fillStyle=col;x.beginPath();x.roundRect?x.roundRect((W-bw)/2,by-fs*.62-16*S,tw,fs*.62+10*S,10*S):x.rect((W-bw)/2,by-fs*.62-16*S,tw,fs*.62+10*S);x.fill();x.fillStyle='#10131f';x.textBaseline='middle';x.fillText(spk.name,(W-bw)/2+13*S,by-fs*.31-11*S);x.font='700 '+fs+'px system-ui,"Segoe UI",Roboto,sans-serif'}
   lines.forEach((l,li)=>{const tw=l.reduce((a,c)=>a+c.w+sp,-sp);let px=(W-tw)/2;const py=by+11*S+lh*(li+.5);
     l.forEach(c=>{const idx=words.indexOf(c.o);x.fillStyle=idx<wordIdx?'#fff':idx===wordIdx?'#ffd23f':'rgba(255,255,255,.45)';x.fillText(c.o.w,px,py);if(idx===wordIdx){x.fillRect(px,py+fs*.55,c.w,3*S)}px+=c.w+sp})});
 }
@@ -350,15 +407,22 @@ function drawFrame(i,p,t,speaking,wordIdx){
   const bar=Math.round(46*S0*(W>H?.5:.3));x.fillStyle='#000';x.fillRect(0,0,W,bar);x.fillRect(0,H-bar,W,bar);
   x.fillStyle='rgba(255,255,255,.85)';x.fillRect(0,0,W*((i+p)/s.scenes.length),4*S0);
   if(t<2.2&&i>=0){const a=Math.min(1,t*2,(2.2-t)*2);x.save();x.globalAlpha=Math.max(0,a);x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';x.shadowColor='#000';x.shadowBlur=12*S0;x.font='800 '+Math.round(54*S0)+'px system-ui,sans-serif';x.fillText(i===0?s.title:'Сцена '+(i+1),W/2,H*.2);x.restore()}
-  drawSubs(x,sc,wordIdx===undefined?-1:wordIdx,W,H,S0);
+  drawSubs(x,speaking,wordIdx===undefined?-1:wordIdx,W,H,S0);
 }
 
 /* ---------- проигрыватель ---------- */
 const cv=$('#cv');let W=1280,H=720,S0=1;
 function setFormat(v){W=v?720:1280;H=v?1280:720;S0=v?.9:1;cv.width=W;cv.height=H;$('#stage').classList.toggle('vert',v);if(st.story&&!P.on)drawFrame(P.i,0,0,false,-1)}
 $('#vert').onchange=e=>setFormat(e.target.checked);
-const P={on:false,i:0,t0:0,wi:-1,dur:6,speaking:false,boundary:false,timed:false,done:false,gen:0,onFinish:null,raf:0,ended:0,safety:0};
+const P={on:false,i:0,li:0,lt0:0,sT0:0,wi:-1,dur:6,ldur:2,speaking:false,boundary:false,timed:false,done:false,gen:0,onFinish:null,raf:0,ended:0,safety:0,cur:null};
 function splitWords(text){const a=[],re=/\S+/g;let m;while((m=re.exec(text)))a.push({w:m[0],c:m.index});return a}
+function parseLines(sc){
+  const hn=st.hero.name+': ',cn=st.comp.on?st.comp.name+': ':'\u0000';
+  return sc.text.split('\n').filter(l=>l.trim()).map(l=>{let who='N',t=l,name='';
+    if(l.startsWith(cn)){who='C';t=l.slice(cn.length);name=st.comp.name}else if(l.startsWith(hn)){who='H';t=l.slice(hn.length);name=st.hero.name}
+    return {who,name,t,words:splitWords(t)}});
+}
+const lineEst=l=>Math.max(1.5,l.words.length*.4/((l.who==='N'?st.voice.rate:1)||1)+.5);
 function startPlay(from){
   const s=st.story;if(!s)return;stopPlay();
   P.on=true;P.done=false;P.gen++;beginScene(from||0);
@@ -367,17 +431,22 @@ function startPlay(from){
 }
 function beginScene(i){
   const s=st.story,sc=s.scenes[i];if(!sc._st)prepScene(sc,st.genre);
-  sc._words=splitWords(sc.text);P.i=i;P.t0=performance.now();P.wi=-1;P.boundary=false;P.speaking=false;P.timed=false;P.ended=0;
-  const rate=st.voice.rate||1;P.dur=Math.max(4,sc._words.length*.4/rate+.8);
+  sc._lines=parseLines(sc);P.i=i;P.sT0=performance.now();P.dur=sc._lines.reduce((a,l)=>a+lineEst(l),0)||4;
   $$('.scene').forEach(e=>e.classList.remove('act'));const el=$('#sc'+i);if(el){el.classList.add('act');try{el.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}}
-  const gen=P.gen;
+  beginLine(0);
+}
+function beginLine(li){
+  const sc=st.story.scenes[P.i],ln=sc._lines[li];if(!ln){nextScene();return}
+  P.li=li;P.lt0=performance.now();P.wi=-1;P.boundary=false;P.speaking=false;P.timed=false;P.ended=0;P.ldur=lineEst(ln);P.cur=ln;
+  const gen=P.gen,i=P.i;
   if($('#narr').checked){
     cancelSpeech();
-    const u=speak(sc.text,{start(){if(gen===P.gen){P.speaking=true}},boundary(ci){if(gen!==P.gen)return;P.boundary=true;let k=0;sc._words.forEach((w,j)=>{if(w.c<=ci)k=j});P.wi=k},end(){if(gen===P.gen&&P.i===i&&P.speaking){P.speaking=false;P.wi=sc._words.length;P.ended=performance.now()}},nostart(){P.timed=true}});
+    const u=speak(ln.t,{start(){if(gen===P.gen)P.speaking=true},boundary(ci){if(gen!==P.gen||P.li!==li)return;P.boundary=true;let k=0;ln.words.forEach((w,j)=>{if(w.c<=ci)k=j});P.wi=k},end(){if(gen===P.gen&&P.i===i&&P.li===li&&P.speaking){P.speaking=false;P.wi=ln.words.length;P.ended=performance.now()}},nostart(){P.timed=true}},ln.who);
     if(!u)P.timed=true;
-    clearTimeout(P.safety);P.safety=setTimeout(()=>{if(gen===P.gen&&P.i===i&&!P.speaking&&!P.ended&&!P.boundary){P.timed=true}},2500);
+    clearTimeout(P.safety);P.safety=setTimeout(()=>{if(gen===P.gen&&P.i===i&&P.li===li&&!P.speaking&&!P.ended&&!P.boundary)P.timed=true},2500);
   }else P.timed=true;
 }
+function nextLine(){const sc=st.story.scenes[P.i];if(P.li+1<sc._lines.length)beginLine(P.li+1);else nextScene()}
 function nextScene(){
   const s=st.story;
   if(P.i+1>=s.scenes.length){finish();return}
@@ -392,15 +461,13 @@ function finish(){
 function stopPlay(){P.on=false;P.gen++;clearTimeout(P.safety);cancelAnimationFrame(P.raf);cancelSpeech();const b=$('#play');if(b)b.textContent=P.done?'▶ Ещё раз':'▶ Смотреть'}
 function loop(now){
   if(!P.on)return;
-  const s=st.story,sc=s.scenes[P.i],el=(now-P.t0)/1000;
-  const nw=sc._words.length;
-  if(P.timed||(!P.speaking&&!P.ended&&!P.boundary&&el>.1&&!$('#narr').checked)){P.wi=Math.min(nw-1,Math.floor(el/P.dur*nw*1.0));}
-  else if(P.speaking&&!P.boundary){P.wi=Math.min(nw-1,Math.floor(el/P.dur*nw))}
-  const p=Math.min(1,el/P.dur);
-  drawFrame(P.i,p,el+P.i*3,P.speaking,P.wi);
-  if(P.timed&&el>P.dur+.4)nextScene();
-  else if(P.ended&&now-P.ended>650)nextScene();
-  else if(!P.timed&&el>P.dur*3+6)nextScene();
+  const s=st.story,ln=P.cur,el=(now-P.lt0)/1000,nw=ln.words.length;
+  if(P.timed||(P.speaking&&!P.boundary)){P.wi=Math.min(nw-1,Math.floor(el/P.ldur*nw))}
+  const p=Math.min(1,(now-P.sT0)/1000/P.dur);
+  drawFrame(P.i,p,(now-P.sT0)/1000+P.i*3,{who:ln.who,name:ln.name,words:ln.words},P.wi);
+  if(P.timed&&el>P.ldur+.3)nextLine();
+  else if(P.ended&&now-P.ended>(ln.who==='N'?450:250))nextLine();
+  else if(!P.timed&&el>P.ldur*3+6)nextLine();
   P.raf=requestAnimationFrame(loop);
 }
 $('#play').onclick=()=>{
@@ -408,7 +475,7 @@ $('#play').onclick=()=>{
   startPlay(P.paused&&!P.done?P.i:0);P.paused=false;
 };
 $('#stop').onclick=()=>{P.paused=false;P.done=false;stopPlay();if(st.story)drawFrame(0,0,0,false,-1)};
-$('#narr').onchange=()=>{if(P.on){beginScene(P.i)}};
+$('#narr').onchange=()=>{if(P.on){beginLine(P.li)}};
 
 /* ---------- запись и экспорт ---------- */
 async function record(withAudio){

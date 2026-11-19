@@ -43,12 +43,13 @@
   <p class="lead">Измени имя, внешность и характер — всё попадёт в сценарий и в промты.</p>
   <div class="hero-layout">
     <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px"><b>🧑 Главный герой</b><button class="btn sec sm" id="hRand">🎲 Случайный герой</button></div>
       <div class="two">
         <div class="field"><label>Имя</label><input type="text" id="hName" maxlength="24"></div>
-        <div class="field"><label>Возраст</label><input type="number" id="hAge" min="5" max="99"></div>
+        <div class="field"><label>Возраст</label><input type="number" id="hAge" min="5" max="99"><div class="chips" id="hAgeQ"></div></div>
       </div>
       <div class="two">
-        <div class="field"><label>Пол</label><div class="chips" id="hGender"><span class="chip" data-v="m">Мужчина</span><span class="chip" data-v="f">Женщина</span></div></div>
+        <div class="field"><label>Пол</label><div class="chips" id="hGender"><span class="chip" data-v="m">👦 Мальчик / мужчина</span><span class="chip" data-v="f">👧 Девочка / женщина</span></div></div>
         <div class="field"><label>Профессия / роль</label><input type="text" id="hProf" maxlength="30" list="profs"></div>
       </div>
       <datalist id="profs"><option>Механик</option><option>Врач</option><option>Бывший военный</option><option>Студент</option><option>Журналист</option><option>Охотник</option><option>Курьер</option><option>Учитель</option><option>Программист</option><option>Повар</option></datalist>
@@ -64,6 +65,7 @@
       </div>
       <div class="two"><div class="field"><label>Тон истории</label><div class="chips" id="hTone"></div></div><div class="field"><label>Длина</label><div class="chips" id="hLen"></div></div></div>
     </div>
+    <div class="card" id="cmpBox"></div>
     <div class="card preview"><b>Превью</b><canvas id="pv" width="300" height="360"></canvas><span class="hint" id="pvName"></span></div>
   </div>
   <div class="nav"><button class="btn sec" data-go="1">← История</button><button class="btn" data-go="3">Голос →</button></div>

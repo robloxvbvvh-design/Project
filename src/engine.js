@@ -125,7 +125,7 @@ function pron(e,c,afterPrep){
 const IRR={'идти':['шёл','шла','шло','шли'],'замереть':['замер','замерла','замерло','замерли'],'помочь':['помог','помогла','помогло','помогли'],'лечь':['лёг','легла','легло','легли'],
  'спасти':['спас','спасла','спасло','спасли'],'сесть':['сел','села','село','сели'],'вынести':['вынес','вынесла','вынесло','вынесли'],'принести':['принёс','принесла','принесло','принесли'],
  'довести':['довёл','довела','довело','довели'],'вскрыть':['вскрыл','вскрыла','вскрыло','вскрыли'],'выйти':['вышел','вышла','вышло','вышли'],'украсть':['украл','украла','украло','украли'],
- 'дожить':['дожил','дожила','дожило','дожили'],'умереть':['умер','умерла','умерло','умерли']};
+ 'выпасть':['выпал','выпала','выпало','выпали'],'упасть':['упал','упала','упало','упали'],'дожить':['дожил','дожила','дожило','дожили'],'умереть':['умер','умерла','умерло','умерли']};
 function pastForm(inf,s){
   const g=s&&s.pl?3:({m:0,f:1,n:2}[(s&&s.g)||'n']);
   let refl=false,base=inf;if(/ся$/.test(inf)){refl=true;base=inf.slice(0,-2)}
@@ -342,7 +342,7 @@ def('skyscraper',{P:n('горящий небоскрёб','m','','burning skyscr
 /* ---------- словарь общих сущностей ---------- */
 const COM={
  path:n('путь','m'),hand:n('рука','f'),hands:n('рука','f','','',{pl:1,o:{pgen:'рук'}}),help:n('помощь','f'),price:n('высокая цена','f'),victory:n('победа','f'),
- trap:n('ловушка','f'),lie:n('обман','m'),friends:n('друг','m','','',{pl:1,an:1}),dawn:n('рассвет','m'),silence:n('тишина','f'),relief:n('облегчение','n'),
+ trap:n('ловушка','f'),lie:n('обман','m'),friends:n('друг','m','','',{pl:1,an:1,o:{pdat:'друзьям',pgen:'друзей',pacc:'друзей',pins:'друзьями',pprep:'друзьях',pnom:'друзья'}}),dawn:n('рассвет','m'),silence:n('тишина','f'),relief:n('облегчение','n'),
  fear:n('страх','m'),horror:n('ужас','m'),panic:n('паника','f'),tension:n('тревога','f'),doubt:n('сомнение','n'),hope:n('надежда','f'),thrill:n('азарт','m'),calm:n('спокойствие','n'),
  despair:n('отчаяние','n'),cold:n('холод','m'),heart:n('сердце','n'),throat:n('горло','n'),chest:n('грудь','f'),legs:n('нога','f','','',{pl:1,o:{pgen:'ног'}}),
  cause:n('причина =всего','f'),mist:n('лёгкая дымка','f')
@@ -376,7 +376,9 @@ function generate(gn,hero,tone,opts){
   const w=findWorld(gn),N=opts.scenes||6;
   const H={id:'H',g:hero.gender==='f'?'f':'m',an:1,name:hero.name};
   const P=w.P,T=w.T,G=w.G,A=w.A;
+  const comp=opts.comp||null;
   T.id='T';A.id='A';
+  const Cm=comp?{id:'C',g:comp.gender==='f'?'f':'m',an:1,name:comp.name}:null;
   const dark=!!(gn.dark>.5);
   const st={hp:3,items:[],ally:false,spot:-1,aware:false,seenT:false,tension:.1,usedAlly:false};
   const R={last:null};let curAct='';
@@ -391,6 +393,7 @@ function generate(gn,hero,tone,opts){
   };
   const X=(e,c,prep)=>{
     if(e===H)return prep&&c!=='nom'?pron(H,c,true):refH(c);
+    if(Cm&&e===Cm){if(c==='nom'&&R.last==='C'&&chance(.8))return pron(Cm,'nom');return nameForm(comp.name,Cm.g,c)}
     if(e===A&&R.last==='A'&&c==='nom')return pron(A,'nom');
     return np(e,c);
   };
@@ -415,6 +418,7 @@ function generate(gn,hero,tone,opts){
 
   /* события: возвращают {c:[{t,rel}],vis,en,act} */
   const ev={};
+  const cmNoun=()=>comp?(comp.age<14?(Cm.g==='f'?'девочка':'мальчик'):(Cm.g==='f'?'девушка':'парень')):'';
   ev.intro=()=>{
     const c=[],fx=FX[gn.fx]&&gn.fx!=='none'?FX[gn.fx]:null;
     const hab=pick(['оказаться','оказаться','находиться']);
@@ -428,12 +432,13 @@ function generate(gn,hero,tone,opts){
     const trait=hero.traitAdj||'храбрый';
     c.push({t:`${nameForm(hero.name,H.g,'nom')}, ${hero.age} ${hero.age%10===1&&hero.age%100!==11?'год':([2,3,4].includes(hero.age%10)&&![12,13,14].includes(hero.age%100)?'года':'лет')}, — ${low(hero.prof)}`,rel:'plain'});
     R.last='H';
+    if(Cm)c.push({t:K(Cm,'стоять',{adv:'рядом',inv:true})+' — '+adjForm(comp.traitAdj||'добрый',Cm.g,'nom')+' '+cmNoun(),rel:'plain'});
     c.push({t:K(H,'быть',{predS:adjForm(trait,H.g,'ins',false,true),drop:chance(.6)}),rel:'and'});
     return {c,vis:{act:'idle',level:.05},en:'standing calmly in',tn:.1};
   };
   const SIGN_ADV=['вдалеке','внезапно','откуда-то издалека','совсем рядом'];
   ev.sign=()=>{const sg=pick(w.sg);const e=Object.assign({},sg,{id:'sg'});
-    return {c:[{t:K(e,pick(['раздаться','послышаться']),{adv:pick(SIGN_ADV),inv:true}),rel:'then'},{t:K(H,pick(['замереть','оглянуться']),{}),rel:'and'}],vis:{act:'look',level:.25,flash:true},en:'hearing a distant ominous sound in',tn:.25}};
+    return {c:[{t:K(e,pick(['раздаться','послышаться']),{adv:pick(SIGN_ADV),inv:true}),rel:'then'},{t:K(H,pick(['замереть','оглянуться']),{}),rel:'and'}],vis:{act:'look',level:.25,flash:true},en:'hearing a distant ominous sound in',tn:.25,ctx:{sg:e}}};
   ev.incite=()=>{
     const c=[];const sp=pick(w.sp);st.aware=true;st.seenT=true;
     if(w.kind==='c'){
@@ -460,12 +465,12 @@ function generate(gn,hero,tone,opts){
     const it=pick(free);st.items.push(it);const sp=pick(w.sp);
     const c=[{t:K(H,pick(['найти','найти','отыскать']),{d:[it,'acc'],pp:spotP(sp)}),rel:'start'}];
     c.push({t:K(H,pick(['сжать','спрятать','проверить']),{d:[it,'acc'],drop:true}),rel:'then'});
-    return {c,vis:{act:'pick',level:.2,props:[it.em]},en:`picking up ${it.en} in`,tn:.2};
+    return {c,vis:{act:'pick',level:.2,props:[it.em]},en:`picking up ${it.en} in`,tn:.2,ctx:{it}};
   };
   ev.travel=()=>{
     const nx=(st.spot+1)%w.sp.length,sp=w.sp[nx];st.spot=nx;
     const c=[{t:K(H,pick(['направиться','двинуться','пойти']),{pp:[sp.prep==='во'?'во':sp.prep,sp,'acc']}),rel:'start'}];
-    return {c:c.filter(x=>x.rel!=='skip'),vis:{act:'walk',level:.3},en:`walking toward ${sp.ph?'the next area':''} of`,tn:.3};
+    return {c:c.filter(x=>x.rel!=='skip'),vis:{act:'walk',level:.3},en:`walking toward the next area of`,tn:.3,ctx:{sp}};
   };
   ev.hazard=()=>{
     const hz=pick(w.hz);st.hz=hz;const c=[];
@@ -476,17 +481,18 @@ function generate(gn,hero,tone,opts){
     if(usable&&chance(.75)){
       c.push({t:K(H,'применить',{d:[usable,'acc']}),rel:'so'});
       c.push({t:K(hzE,'уступить',{}),rel:'and'});st.tension-=.05;
-      return {c,vis:{act:'fight',level:.5,props:[hz.em,usable.em]},en:`using ${usable.en} against ${hz.en} in`,tn:.5};
+      return {c,vis:{act:'fight',level:.5,props:[hz.em,usable.em]},en:`using ${usable.en} against ${hz.en} in`,tn:.5,ctx:{hz,used:usable}};
     }
     if(chance(.5)){c.push({t:K(H,'обойти',{d:[hzE,'acc']}),rel:'so'});c.push({t:K(n('дорога','f'),'занять',{d:[n('лишний час','m'),'acc'],adv:'',drop:false}).replace(/^/,'')||'',rel:'but'});
-      return {c,vis:{act:'walk',level:.5,props:[hz.em]},en:`circling around ${hz.en} in`,tn:.5};}
+      return {c,vis:{act:'walk',level:.5,props:[hz.em]},en:`circling around ${hz.en} in`,tn:.5,ctx:{hz}};}
     st.hp--;
     c.push({t:K(H,'рискнуть',{}),rel:'so'});c.push({t:K(H,'пробраться',{pp:['через',hzE,'acc']}),rel:'and'});
-    return {c,vis:{act:'run',level:.6,props:[hz.em],flash:true},en:`forcing through ${hz.en} in`,tn:.6};
+    return {c,vis:{act:'run',level:.6,props:[hz.em],flash:true},en:`forcing through ${hz.en} in`,tn:.6,ctx:{hz}};
   };
   ev.chase=()=>{
     const c=[];const cv=Object.assign({},w.cv,{id:'C'});
     c.push({t:K(T,pick(['настигать','преследовать']),{d:[H,'acc'],dinv:true}),rel:'start'});
+    if(Cm&&chance(.7))c.push({t:K(Cm,'схватить',{d:[H,'acc'],pp:['за',COM.hand,'acc']}),rel:'then'});
     if(chance(.6)){c.push({t:K(H,'спрятаться',{pp:['за',cv,'ins']}),rel:'so'});c.push({t:K(T,'пройти',{adv:'стороной'}),rel:'and'});
       return {c,vis:{act:'hide',level:.75,props:[cv.em]},en:`hiding behind ${w.cv.en} from ${T.en} in`,tn:.7};}
     c.push({t:K(H,'бежать',{}),rel:'so'});
@@ -531,7 +537,7 @@ function generate(gn,hero,tone,opts){
     c[0].x=cl;c[0].rel='colon0';
     c.push({t:K(H,'решиться',{pp:['на',n('последний шаг','m'),'acc']}),rel:'then'});
     st.twist=sec;
-    return {c,vis:{act:'shock',level:.75,flash:true},en:'shocked realization of a twist in',tn:.8};
+    return {c,vis:{act:'shock',level:.75,flash:true},en:'shocked realization of a twist in',tn:.8,ctx:{sec:sec}};
   };
   ev.climax=()=>{
     const score=st.hp+st.items.length*.7+(st.ally?1:0)+(rnd()*2-1);
@@ -539,7 +545,7 @@ function generate(gn,hero,tone,opts){
     const c=[];
     if(w.kind==='c')c.push({t:K(H,'броситься',{pp:['на',T,'acc']}),rel:'start'});else c.push({t:K(H,'встретить',{d:[T,'acc'],end:'лицом к лицу'}),rel:'start'});
     if(st.items.length)c.push({t:K(H,'использовать',{d:[st.items[0],'acc'],drop:true}),rel:'and'});
-    if(hero.catch)c.push({t:`«${hero.catch.replace(/[.!]+$/,'')}», — ${hero.gender==='f'?'сказала':'сказал'} ${nameForm(hero.name,H.g,'nom')}`,rel:'plain'});
+    if(hero.catch&&!Cm)c.push({t:`«${hero.catch.replace(/[.!]+$/,'')}», — ${hero.gender==='f'?'сказала':'сказал'} ${nameForm(hero.name,H.g,'nom')}`,rel:'plain'});
     if(out==='win')c.push({t:K(H,'победить',{d:[T,'acc']}),rel:'then'});
     else if(out==='costly'){c.push({t:K(H,'победить',{d:[T,'acc']}),rel:'then'});c.push({t:K(H,'заплатить',{d:[COM.price,'acc'],pp:['за',COM.victory,'acc'],drop:true}),rel:'but'})}
     else c.push({t:K(T,'отступить',{}),rel:'but',pre:true});
@@ -555,8 +561,44 @@ function generate(gn,hero,tone,opts){
     else if(tone==='dark')c.push({t:K(COM.silence,'принести',{neg:true,d:[COM.relief,'acc']}),rel:'but'});
     else if(tone==='ironic')c.push({t:'Всё прошло почти по плану, если не считать '+np(st.hz||w.hz[0],'gen')+' и '+np(T,'gen'),rel:'plain'});
     else c.push({t:K(H,'вернуться',{pp:['к',COM.friends,'dat']}),rel:'then'});
+    if(Cm)c.push({t:K(Cm,'улыбнуться',{}),rel:'plain'});
     return {c,vis:{act:'walk',level:.05},en:'quiet closing moment, new dawn over',tn:.1};
   };
+
+
+  /* ---------- диалоги: реплики строятся из тех же сущностей и падежей ---------- */
+  const PRES={'приближаться':['приближается','приближаются'],'не стихать':['не стихает','не стихают'],'хотеть':['хочет','хотят'],'просить':['просит','просят']};
+  const pres=(v,pl)=>PRES[v][pl?1:0];
+  const nm=hero.name,cn=comp?comp.name:'';
+  const LN=(who,t)=>({w:who,t});
+  function dlg(act,x){
+    if(!comp)return [];
+    const Hs=t=>LN('H',t),Cs=t=>LN('C',t),Tn=()=>cap(np(T,'nom'));
+    const warn=()=>pick([`Осторожно, ${np(T,'nom')} ${w.kind==='c'?pres('приближаться',T.pl):pres('не стихать',T.pl)}!`,`${Tn()} уже рядом, ${nm}!`]);
+    const [vb,pr,cs]=w.gv,obj=pr?PP(pr,G,cs):np(G,cs);
+    switch(act){
+     case 'intro':return [Cs(`Привет, ${nm}!`),Hs(`Привет, ${cn}.`)];
+     case 'sign':return [Cs(`${nm}, ты ${pick(['слышал','слышала'].slice(H.g==='f'?1:0,H.g==='f'?2:1))} ${np(x.sg,'acc')}?`),Hs(cap(pastForm('услышать',H))+'. Тише.')];
+     case 'incite':return [Cs(`${nm}, смотри!`),Cs(warn()),Hs(pick(['Не двигайся.','Тихо. Не привлекай внимания.']))];
+     case 'resolve':return [Hs(`Нам нужно ${vb} ${obj}.`),Cs(pick([`Я с тобой, ${nm}.`,'Тогда пошли.']))];
+     case 'gather':return x.it?[Hs(`Смотри, что я ${pastForm('найти',H)}: ${np(x.it,'acc')}!`),Cs(pick(['Это нам пригодится.','Хорошая находка.']))]:[];
+     case 'travel':return x.sp?[Cs('Куда теперь?'),Hs(cap(PP(x.sp.prep,x.sp,'acc'))+'.')]:[];
+     case 'hazard':return x.hz?[Cs(`Что нам делать с ${np(x.hz,'ins')}?`),Hs(x.used?`Попробуем ${pick(['использовать','применить'])} ${np(x.used,'acc')}.`:pick(['Попробуем обойти.','Придётся рискнуть.']))]:[];
+     case 'chase':return [Cs(warn()),Hs(pick(['Бежим!','Прячься!','Не оглядывайся!']))];
+     case 'ally':return [Cs(pick(['Кто это?','Ему можно доверять?'])),Hs('Тише. Посмотрим.')];
+     case 'setback':return [Cs(`Ты как, ${nm}? Держись!`),Hs(pick(['Ничего. Я в порядке.','Всё нормально. Идём дальше.']))];
+     case 'twist':{const sc=x.sec;
+       if(sc==='betray')return [Cs(`Я так и ${pastForm('знать',Cm)}: ${np(A,'dat')} нельзя было доверять!`),Hs(`${cap(np(A,'nom'))} нас ${pastForm('обмануть',A)}.`)];
+       if(sc==='trap')return [Cs(`${cap(np(G,'nom'))} — это ${pick(['ловушка','обман'])}!`),Hs('Назад!')];
+       if(sc==='cause')return [Hs(`${cap(np(G,'nom'))} и есть причина всего!`),Cs('Значит, всё только начинается.')];
+       if(sc==='self')return [Cs(`Они пришли за тобой, ${nm}!`),Hs('Значит, это моя битва.')];
+       return [Cs(`Постой! ${Tn()} не ${pres('хотеть',T.pl)} нападать, ${T.pl?'они просят':'оно просит'} помощи.`),Hs('Тогда нельзя бить первыми.')];}
+     case 'finale':{
+       const tl={epic:`${cn}, я бы не ${pastForm('справиться',H)} без тебя.`,ironic:'Ну, могло быть и хуже.',dark:'Но мы ещё не дома.',warm:`Спасибо, что ты ${pastForm('быть',Cm)} рядом.`}[tone]||'Мы справились.';
+       return [Hs(hero.catch?hero.catch:pick(['Сейчас или никогда!','Всё закончится здесь!'])),Cs('Я с тобой!'),Cs(pick(['Мы это сделали!','Получилось!'])),Hs(tl)];}
+    }
+    return [];
+  }
 
   /* ---------- планировщик ---------- */
   const seq=['intro','incite','resolve'];
@@ -585,7 +627,7 @@ function generate(gn,hero,tone,opts){
     // добавим внутреннее состояние в напряжённых сценах
     if(!['intro','ending','inner'].includes(act)&&(e.tn||0)>.45&&list.length<4&&chance(.55)){const inn=ev.inner();list.push({t:inn.c[0].t,rel:'then'})}
     // дополнение: на сцене resolve сразу подбираем предмет
-    scenes.push({act,e,list});
+    scenes.push({act,e,list,dl:dlg(act,e.ctx||{})});
     prevAct=act;
   }
   // соединение: climax + ending в одну сцену для компактности при N==6 уже отдельные
@@ -612,7 +654,9 @@ function generate(gn,hero,tone,opts){
     const dedup=[...new Set(props)].slice(0,3);while(dedup.length<3)dedup.push(w.sp.length?pick(w.it).em:'✨');
     const shot=SHOTS[Math.min(SHOTS.length-1,Math.floor(rnd()*3)+(vis.act==='run'?3:0)+(vis.act==='fight'?2:0))];
     const style=(root.TONES&&root.TONES[hero.tone]?root.TONES[hero.tone].en:'cinematic');
-    return {text:text(sc.list),props:dedup,threat:base>=.25||sc.act==='incite'?T.em:'',level:base,flash:!!vis.flash,act:vis.act,kind:sc.act,
+    const nar=text(sc.list),lines=[{w:'N',t:nar}].concat(sc.dl||[]);
+    const label=l=>l.w==='N'?l.t:(l.w==='H'?nm:cn)+': '+l.t;
+    return {text:lines.map(label).join('\n'),props:dedup,threat:base>=.25||sc.act==='incite'?T.em:'',level:base,flash:!!vis.flash,act:vis.act,kind:sc.act,
       anim:`${shot}, ${hero.heroEn||'the hero'} ${sc.e.en} ${gn.en||w.P.en}, ${base>.6?'high tension':base>.3?'rising suspense':'calm atmosphere'}, ${style}, smooth camera motion, 5 seconds, 16:9`};
   });
   out.title=(gn.n||'История')+': '+hero.name;

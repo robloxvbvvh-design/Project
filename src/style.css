@@ -78,3 +78,5 @@ details{margin-top:14px}
 summary{cursor:pointer;color:var(--mut);font-size:14px}
 .solo .steps,.solo .nav,.solo #s1,.solo #s2,.solo #s3{display:none!important}
 @media (max-width:860px){.layout,.hero-layout{grid-template-columns:1fr}.preview{position:static}.two,.three{grid-template-columns:1fr}.steps{margin-left:0}.bar{flex-wrap:wrap}}
+.hero-layout .preview{grid-column:2;grid-row:1/3}
+@media (max-width:860px){.hero-layout .preview{grid-column:1;grid-row:auto}}
