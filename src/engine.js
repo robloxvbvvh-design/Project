@@ -656,7 +656,8 @@ function generate(gn,hero,tone,opts){
     const style=(root.TONES&&root.TONES[hero.tone]?root.TONES[hero.tone].en:'cinematic');
     const nar=text(sc.list),lines=[{w:'N',t:nar}].concat(sc.dl||[]);
     const label=l=>l.w==='N'?l.t:(l.w==='H'?nm:cn)+': '+l.t;
-    return {text:lines.map(label).join('\n'),props:dedup,threat:base>=.25||sc.act==='incite'?T.em:'',level:base,flash:!!vis.flash,act:vis.act,kind:sc.act,
+    const nameOf={};[].concat(w.it,w.hz,[w.cv,A,T,G]).forEach(e=>{if(e&&e.em)nameOf[e.em]=e.ph.replace(/=/g,'')});
+    return {propNames:dedup.map(em=>nameOf[em]||''),threatName:T.ph.replace(/=/g,''),threatKind:w.kind,text:lines.map(label).join('\n'),props:dedup,threat:base>=.25||sc.act==='incite'?T.em:'',level:base,flash:!!vis.flash,act:vis.act,kind:sc.act,
       anim:`${shot}, ${hero.heroEn||'the hero'} ${sc.e.en} ${gn.en||w.P.en}, ${base>.6?'high tension':base>.3?'rising suspense':'calm atmosphere'}, ${style}, smooth camera motion, 5 seconds, 16:9`};
   });
   out.title=(gn.n||'История')+': '+hero.name;
