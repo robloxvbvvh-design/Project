@@ -1,0 +1,136 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>БЛЭКАУТ — лист персонажей и фонов</title>
+<style>html,body{margin:0;background:#07090f}svg{display:block}</style></head>
+<body><div id="root"></div>
+<script>
+const P={ink:'#0a0c14',skin:'#c9a483',skinPale:'#d6bfa8',amber:'#e8a33d',red:'#b8372c',green:'#3fd18a',teal:'#2a4a5a',navy:'#141c2e',steel:'#26324a'};
+// deterministic rain
+function rng(s){return()=> (s=(s*16807)%2147483647)/2147483647}
+function rain(w,h,n,seed,op=.35){const r=rng(seed);let o='';for(let i=0;i<n;i++){const x=r()*w,y=r()*h,l=8+r()*14;o+=`<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x-l*.25).toFixed(1)}" y2="${(y+l).toFixed(1)}" stroke="#9db4d0" stroke-opacity="${op}" stroke-width="1.2"/>`}return o}
+// ---------- characters (slot 260x420) ----------
+function base({w=100,torso,pants,skin=P.skin,shoe='#0a0a0f',cx=100}){
+ const l=cx-w/2;
+ return `<rect x="${cx-30}" y="270" width="24" height="132" rx="9" fill="${pants}"/><rect x="${cx+6}" y="270" width="24" height="132" rx="9" fill="${pants}"/>
+ <ellipse cx="${cx-20}" cy="403" rx="22" ry="8" fill="${shoe}"/><ellipse cx="${cx+20}" cy="403" rx="22" ry="8" fill="${shoe}"/>
+ <rect x="${l-16}" y="125" width="22" height="135" rx="11" fill="${torso}"/><rect x="${l+w-6}" y="125" width="22" height="135" rx="11" fill="${torso}"/>
+ <circle cx="${l-5}" cy="264" r="11" fill="${skin}"/><circle cx="${l+w+5}" cy="264" r="11" fill="${skin}"/>
+ <rect x="${l}" y="108" width="${w}" height="175" rx="32" fill="${torso}"/>
+ <rect x="${cx-11}" y="92" width="22" height="26" fill="${skin}"/>`}
+function face({cx=100,cy=72,skin=P.skin,mouth='flat',brow=0}){
+ const m={flat:`<path d="M${cx-10} ${cy+22} q10 3 20 0" stroke="#3a2a22" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+  smile:`<path d="M${cx-11} ${cy+20} q11 9 22 0" stroke="#3a2a22" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+  worry:`<path d="M${cx-10} ${cy+25} q10 -7 20 0" stroke="#3a2a22" stroke-width="3" fill="none" stroke-linecap="round"/>`}[mouth];
+ return `<circle cx="${cx}" cy="${cy}" r="38" fill="${skin}"/><ellipse cx="${cx-14}" cy="${cy+2}" rx="3.6" ry="4.8" fill="#10131c"/><ellipse cx="${cx+14}" cy="${cy+2}" rx="3.6" ry="4.8" fill="#10131c"/>
+ <path d="M${cx-21} ${cy-9-brow} l14 ${3+brow}" stroke="#2a1d17" stroke-width="3.4" stroke-linecap="round"/><path d="M${cx+21} ${cy-9-brow} l-14 ${3+brow}" stroke="#2a1d17" stroke-width="3.4" stroke-linecap="round"/>${m}`}
+const chars={
+denis:()=>`${base({w:128,torso:'#2d4a52',pants:'#1c2230',cx:130})}
+ <rect x="66" y="205" width="128" height="9" fill="${P.amber}" opacity=".85"/><rect x="66" y="225" width="128" height="5" fill="${P.amber}" opacity=".5"/>
+ ${face({cx:130,mouth:'worry',brow:2})}
+ <path d="M104 92 q26 12 52 0 l-4 14 q-22 14 -44 0z" fill="#6b6f78" opacity=".45"/>
+ <path d="M90 58 a40 40 0 0 1 80 0 z" fill="#1a2030"/><rect x="86" y="56" width="88" height="9" rx="4" fill="#141926"/><rect x="150" y="60" width="38" height="6" rx="3" fill="#141926"/>
+ <rect x="206" y="250" width="30" height="12" rx="4" fill="#2b2f3a" transform="rotate(-18 206 256)"/><polygon points="232 244 258 214 258 276" fill="${P.amber}" opacity=".18"/><circle cx="234" cy="244" r="5" fill="${P.amber}" opacity=".7"/>`,
+miha:()=>`${base({w:84,torso:'#566878',pants:'#232a38',skin:P.skinPale,cx:100})}
+ ${face({cx:100,skin:P.skinPale,mouth:'smile',brow:-1})}
+ <path d="M64 58 q10 -34 36 -30 q30 -2 38 30 q-20 -18 -38 -14 q-22 0 -36 14z" fill="#1b1612"/>
+ <path d="M92 86 q-6 8 -22 -2 M108 86 q6 8 22 -2 M100 90 q-2 40 6 70 q12 40 36 56" stroke="#9fd6e8" stroke-width="2.6" fill="none"/>
+ <rect x="150" y="320" width="76" height="80" rx="8" fill="#1a2234"/><rect x="158" y="330" width="60" height="26" rx="4" fill="#07120e"/>
+ <text x="188" y="350" font-size="20" font-family="DejaVu Sans" font-weight="bold" fill="${P.green}" text-anchor="middle">31%</text><circle cx="168" cy="376" r="5" fill="${P.green}" opacity=".8"/><rect x="180" y="372" width="36" height="8" rx="3" fill="#2c3750"/>`,
+petrovich:()=>`${base({w:150,torso:'#4a3a33',pants:'#2a2420',cx:110})}
+ <path d="M42 128 h136 v56 h-136z" fill="#5a4a40" opacity=".0"/><rect x="38" y="112" width="144" height="170" rx="40" fill="#3b2d27"/>
+ <path d="M110 112 v170" stroke="#241b17" stroke-width="3"/><path d="M76 150 h-26 M144 150 h26 M72 200 h-24 M148 200 h24" stroke="#241b17" stroke-width="3"/>
+ ${face({cx:110,skin:'#c2967c',mouth:'flat',brow:1})}
+ <path d="M74 78 q-6 -14 -2 -26 M146 78 q6 -14 2 -26" stroke="#8a8a90" stroke-width="7" stroke-linecap="round" fill="none"/>
+ <path d="M94 90 q16 -9 32 0 q-16 14 -32 0z" fill="#8a8a90"/>
+ <rect x="188" y="240" width="22" height="34" rx="4" fill="#33383f"/><circle cx="199" cy="228" r="8" fill="none" stroke="#33383f" stroke-width="3"/><circle cx="199" cy="258" r="14" fill="${P.amber}" opacity=".85"/><circle cx="199" cy="258" r="42" fill="${P.amber}" opacity=".12"/>`,
+thugs:()=>{const one=(x,s,c)=>`<g transform="translate(${x} ${420-420*s}) scale(${s})">
+ <rect x="68" y="268" width="24" height="134" rx="9" fill="${c}"/><rect x="104" y="268" width="24" height="134" rx="9" fill="${c}"/>
+ <rect x="60" y="106" width="76" height="178" rx="34" fill="${c}"/><rect x="42" y="124" width="22" height="130" rx="11" fill="${c}"/><rect x="132" y="124" width="22" height="130" rx="11" fill="${c}"/>
+ <path d="M54 94 q0 -62 44 -62 q44 0 44 62 q0 28 -20 42 h-48 q-20 -14 -20 -42z" fill="${c}"/><path d="M70 80 q28 -14 56 0 v18 q-28 12 -56 0z" fill="#05060a"/>
+ <ellipse cx="86" cy="88" rx="4.5" ry="3" fill="#cfd8e0" opacity=".75"/><ellipse cx="110" cy="88" rx="4.5" ry="3" fill="#cfd8e0" opacity=".75"/></g>`;
+ return one(10,.94,'#171c29')+one(120,1,'#0e121b')+`<rect x="196" y="262" width="34" height="46" rx="5" fill="#8a2f26"/><rect x="204" y="252" width="14" height="12" rx="3" fill="#8a2f26"/>`},
+doctor:()=>`${base({w:100,torso:'#cfd6dc',pants:'#2a4a52',skin:'#cdb59c',cx:110})}
+ <path d="M60 140 h100" stroke="#9aa6af" stroke-width="3"/><rect x="102" y="112" width="16" height="170" fill="#2a4a52" opacity=".55"/>
+ ${face({cx:110,skin:'#cdb59c',mouth:'flat',brow:0})}
+ <path d="M72 82 h76 v10 q-38 36 -76 0z" fill="#8fb3bf"/><circle cx="96" cy="74" r="11" fill="none" stroke="#1a1e2a" stroke-width="3"/><circle cx="124" cy="74" r="11" fill="none" stroke="#1a1e2a" stroke-width="3"/><path d="M107 74 h6" stroke="#1a1e2a" stroke-width="3"/>
+ <path d="M72 50 q38 -34 76 0 q-4 -6 -76 0z" fill="#2a2420"/>
+ <path d="M86 118 q-10 60 24 70 q34 -10 24 -70" stroke="#222" stroke-width="3.5" fill="none"/><circle cx="110" cy="192" r="6" fill="#222"/>
+ <rect x="144" y="270" width="26" height="10" rx="3" fill="#1a1e2a"/><rect x="146" y="262" width="22" height="3" fill="${P.red}"/>`,
+oldman:()=>`<rect x="14" y="340" width="232" height="14" rx="4" fill="#3a4258"/><rect x="22" y="354" width="10" height="48" fill="#2a3144"/><rect x="228" y="354" width="10" height="48" fill="#2a3144"/>
+ <rect x="22" y="300" width="216" height="44" rx="12" fill="#4a5470"/><rect x="26" y="262" width="62" height="42" rx="14" fill="#d9dde3"/>
+ <path d="M52 290 q40 -50 90 -40 l70 54 v36 h-160z" fill="#7a8fa8"/>
+ <circle cx="70" cy="252" r="30" fill="#cdb59c"/><path d="M42 244 q4 -30 32 -30 q-12 10 -10 20z" fill="#e4e6ea"/><path d="M96 244 q-2 -26 -26 -28" stroke="#e4e6ea" stroke-width="8" fill="none"/>
+ <ellipse cx="60" cy="252" rx="2.8" ry="3.4" fill="#10131c"/><ellipse cx="78" cy="252" rx="2.8" ry="3.4" fill="#10131c"/>
+ <path d="M52 266 h34 v10 q-17 12 -34 0z" fill="#9fd6e8" opacity=".85"/><path d="M86 272 q40 6 72 -20 q22 -18 40 -4" stroke="#9fd6e8" stroke-width="2.6" fill="none"/>
+ <rect x="180" y="240" width="64" height="70" rx="8" fill="#1a2234"/><rect x="188" y="250" width="48" height="24" rx="3" fill="#07120e"/><path d="M190 264 l10 0 l6 -9 l8 16 l6 -7 h10" stroke="${P.green}" stroke-width="2.4" fill="none"/><circle cx="196" cy="290" r="4" fill="${P.red}"/>`
+};
+// ---------- backgrounds (panel 270x480) ----------
+const bgs={
+flat:()=>`<rect width="270" height="480" fill="#0f1524"/><rect y="372" width="270" height="108" fill="#0a0e18"/>
+ <rect x="40" y="60" width="190" height="220" rx="6" fill="#1d2840"/><rect x="48" y="68" width="174" height="204" fill="#070b16"/>
+ <path d="M48 250 v-40 h18 v-26 h14 v30 h20 v-50 h16 v50 h22 v-20 h14 v56z" fill="#0d1424"/>
+ <g><rect x="148" y="150" width="62" height="100" fill="#0b1220"/><rect x="148" y="150" width="30" height="100" fill="#1a1812"/>${[0,1,2,3].map(i=>`<rect x="152" y="${158+i*22}" width="8" height="10" fill="${P.amber}" opacity=".85"/><rect x="164" y="${158+i*22}" width="8" height="10" fill="${P.amber}" opacity=".85"/>`).join('')}${[0,1,2,3].map(i=>`<rect x="184" y="${158+i*22}" width="8" height="10" fill="#0e1626"/><rect x="196" y="${158+i*22}" width="8" height="10" fill="#0e1626"/>`).join('')}</g>
+ <g clip-path="url(#w1)">${rain(190,210,50,7,.4)}</g><defs><clipPath id="w1"><rect x="40" y="60" width="190" height="220"/></clipPath></defs>
+ <path d="M135 68 v204 M48 170 h174" stroke="#1d2840" stroke-width="6"/>
+ <rect x="22" y="344" width="160" height="40" rx="6" fill="#26324a"/><rect x="22" y="326" width="48" height="24" rx="10" fill="#8e98ad"/><rect x="22" y="352" width="160" height="26" fill="#36425e"/>
+ <rect x="196" y="332" width="50" height="50" rx="4" fill="#1a2234"/><rect x="202" y="338" width="38" height="16" rx="2" fill="#07120e"/><text x="221" y="351" font-size="12" font-weight="bold" font-family="DejaVu Sans" fill="${P.green}" text-anchor="middle">31%</text><circle cx="221" cy="366" r="9" fill="${P.green}" opacity=".12"/>`,
+stairs:()=>`<rect width="270" height="480" fill="#0b101c"/>
+ ${[0,1,2,3,4].map(i=>`<polygon points="0,${90+i*80} 270,${130+i*80} 270,${150+i*80} 0,${110+i*80}" fill="${i%2?'#151c2d':'#1a2236'}"/>`).join('')}
+ ${[0,1,2,3,4,5,6,7,8,9,10,11].map(i=>`<line x1="${12+i*22}" y1="${100+i*3.4}" x2="${12+i*22}" y2="${170+i*3.4}" stroke="#202b44" stroke-width="3"/>`).join('')}
+ <line x1="0" y1="96" x2="270" y2="136" stroke="#2a3654" stroke-width="5"/><line x1="0" y1="176" x2="270" y2="216" stroke="#2a3654" stroke-width="5"/>
+ <rect x="188" y="28" width="62" height="62" rx="4" fill="#111827"/><text x="219" y="74" font-size="46" font-weight="bold" font-family="DejaVu Sans" fill="#3a4a6a" text-anchor="middle">7</text>
+ <polygon points="40,430 250,330 250,410" fill="${P.amber}" opacity=".16"/><circle cx="40" cy="430" r="6" fill="${P.amber}" opacity=".8"/>
+ <rect y="440" width="270" height="40" fill="#07090f"/>`,
+lot:()=>`<rect width="270" height="480" fill="#090d17"/><rect y="330" width="270" height="150" fill="#0d121e"/>
+ <rect x="20" y="210" width="152" height="108" rx="4" fill="#18213a"/><path d="M172 238 h44 l22 38 v42 h-66z" fill="#1d2a47"/><path d="M180 246 h30 l14 28 h-44z" fill="#0a111f"/>
+ <rect x="150" y="296" width="70" height="26" rx="13" fill="#10151f"/><rect x="60" y="300" width="66" height="30" rx="14" fill="#10151f"/>
+ ${[48,92,206].map(x=>`<circle cx="${x}" cy="320" r="19" fill="#070a11"/><circle cx="${x}" cy="320" r="8" fill="#2b3550"/>`).join('')}
+ <rect x="104" y="286" width="46" height="22" rx="10" fill="#222d49"/><rect x="127" y="280" width="9" height="8" fill="#222d49"/>
+ <circle cx="226" cy="300" r="4" fill="${P.red}" opacity=".8"/>
+ <ellipse cx="150" cy="420" rx="90" ry="12" fill="#121a2c"/>
+ <rect x="0" y="170" width="270" height="140" fill="#9db4d0" opacity=".04"/><g>${rain(270,480,60,11,.3)}</g>`,
+road:()=>`<rect width="270" height="480" fill="#080b14"/><polygon points="108,190 162,190 270,480 0,480" fill="#121927"/>
+ ${[0,1,2,3,4].map(i=>`<polygon points="${133-i*1.2},${200+i*i*14+i*20} ${137+i*1.2},${200+i*i*14+i*20} ${138+i*2.6},${220+i*i*14+i*26} ${132-i*2.6},${220+i*i*14+i*26}" fill="#3a4666" opacity=".7"/>`).join('')}
+ <path d="M0 190 h270" stroke="#0e1424" stroke-width="2"/>
+ <path d="M40 190 v-120 h26" stroke="#222c44" stroke-width="5" fill="none"/><circle cx="68" cy="72" r="6" fill="${P.amber}" opacity=".45"/><polygon points="68,76 40,190 96,190" fill="${P.amber}" opacity=".06"/>
+ <path d="M230 190 v-80" stroke="#1b2438" stroke-width="5"/><path d="M200 190 v-60" stroke="#1b2438" stroke-width="4"/>
+ <rect x="10" y="130" width="6" height="60" fill="#0e1424"/><rect x="236" y="150" width="14" height="40" fill="#0e1424"/>
+ <ellipse cx="135" cy="440" rx="70" ry="9" fill="#1c2640" opacity=".7"/><g>${rain(270,480,80,23,.35)}</g>`,
+hospital:()=>`<rect width="270" height="480" fill="#090d17"/>
+ <rect x="20" y="130" width="230" height="260" fill="#10172a"/>
+ <rect x="20" y="130" width="115" height="260" fill="#1b1d20"/>
+ ${[0,1,2,3,4,5].map(r=>[0,1,2].map(c=>`<rect x="${32+c*34}" y="${150+r*38}" width="22" height="22" fill="${P.amber}" opacity="${(.55+.3*((r+c)%2)).toFixed(2)}"/>`).join('')).join('')}
+ ${[0,1,2,3,4,5].map(r=>[0,1,2].map(c=>`<rect x="${148+c*34}" y="${150+r*38}" width="22" height="22" fill="#0b1120"/>`).join('')).join('')}
+ <rect x="104" y="100" width="62" height="36" rx="3" fill="#1a2234"/><rect x="132" y="104" width="6" height="28" fill="${P.red}" opacity=".75"/><rect x="121" y="115" width="28" height="6" fill="${P.red}" opacity=".75"/>
+ <rect x="20" y="390" width="230" height="90" fill="#0a0e18"/><rect x="26" y="398" width="48" height="30" rx="3" fill="#232b3f"/><circle cx="36" cy="408" r="4" fill="${P.amber}"/>
+ <g>${rain(270,480,70,31,.3)}</g>`,
+corridor:()=>`<rect width="270" height="480" fill="#0b0e17"/>
+ <polygon points="0,0 100,170 100,330 0,480" fill="#141a28"/><polygon points="270,0 170,170 170,330 270,480" fill="#10151f"/>
+ <polygon points="0,0 270,0 170,170 100,170" fill="#0d111b"/><polygon points="0,480 270,480 170,330 100,330" fill="#171d2c"/>
+ <rect x="100" y="170" width="70" height="160" fill="#06080e"/>
+ ${[0,1,2].map(i=>`<ellipse cx="135" cy="${28+i*54}" rx="${50-i*14}" ry="${5-i}" fill="${P.red}" opacity="${.85-i*.2}"/><polygon points="${135-(50-i*14)},${28+i*54} ${135+(50-i*14)},${28+i*54} ${135+(20-i*5)},${120+i*30} ${135-(20-i*5)},${120+i*30}" fill="${P.red}" opacity=".05"/>`).join('')}
+ <rect x="200" y="200" width="46" height="70" fill="#0e1320" transform="skewY(14) translate(0 -50)"/>
+ <rect x="112" y="268" width="46" height="8" fill="#2a3350"/><rect x="116" y="258" width="38" height="10" rx="3" fill="#4a5470"/><rect x="120" y="226" width="14" height="32" fill="#d9dde3" opacity=".7"/>
+ <rect x="150" y="238" width="10" height="14" rx="2" fill="#1a2234"/><circle cx="155" cy="245" r="2.4" fill="${P.green}"/>
+ <rect x="8" y="330" width="60" height="14" fill="#1a2234" opacity=".0"/>`
+};
+// ---------- sheet ----------
+const W=2160,H=1500;let s=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="DejaVu Sans, sans-serif">
+<defs><radialGradient id="vg"><stop offset="55%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".55"/></radialGradient></defs>
+<rect width="${W}" height="${H}" fill="#07090f"/>
+<text x="60" y="78" font-size="44" font-weight="bold" fill="#e9edf5" letter-spacing="6">БЛЭКАУТ</text>
+<text x="370" y="78" font-size="26" fill="${P.amber}">серия 1 «Без света» — лист персонажей и фонов</text>
+<text x="60" y="140" font-size="22" fill="#7c89a6" letter-spacing="3">ФОНЫ</text>`;
+const bgList=[['flat','1. Квартира, 9 этаж'],['stairs','2. Лестница'],['lot','3. Стоянка, фура'],['road','4. Трасса'],['hospital','5. Больница снаружи'],['corridor','6. Коридор больницы']];
+bgList.forEach(([k,t],i)=>{const x=60+i*343,y=160,sc=1.2;
+ s+=`<g transform="translate(${x} ${y}) scale(${sc})"><svg width="270" height="480" viewBox="0 0 270 480" overflow="hidden">${bgs[k]()}</svg><rect width="270" height="480" fill="url(#vg)"/></g>
+ <text x="${x}" y="${y+480*sc+34}" font-size="22" fill="#cfd6e6">${t}</text>`;});
+s+=`<text x="60" y="860" font-size="22" fill="#7c89a6" letter-spacing="3">ГЕРОИ</text>`;
+const chList=[['denis','Денис, 53','водитель, фонарик в руке'],['miha','Миха','друг, шутит, аппарат 31%'],['petrovich','Петрович','сосед с генератором'],['thugs','Грабители (двое)','без лиц, капюшоны'],['doctor','Врач','маска, белый халат'],['oldman','Старик','чужой аппарат, розетка']];
+chList.forEach(([k,t,sub],i)=>{const x=60+i*343,y=890;
+ s+=`<rect x="${x}" y="${y}" width="320" height="480" rx="10" fill="#0d1220" stroke="#1c2640"/><g transform="translate(${x+10} ${y+20}) scale(1.1)"><svg width="260" height="420" viewBox="0 0 260 420" overflow="visible">${chars[k]()}</svg></g>
+ <text x="${x}" y="${y+510}" font-size="22" font-weight="bold" fill="#e9edf5">${t}</text><text x="${x}" y="${y+540}" font-size="17" fill="#7c89a6" style="display:none">${sub}</text>`;});
+// palette strip
+const pal=[['#07090f','ночь'],['#141c2e','тень'],['#2a4a5a','сталь'],['#e8a33d','свет'],['#b8372c','тревога'],['#3fd18a','индикатор']];
+pal.forEach(([c,n],i)=>{s+=`<rect x="${1560+i*96}" y="42" width="84" height="36" rx="6" fill="${c}" stroke="#2a3654"/><text x="${1602+i*96}" y="100" font-size="14" fill="#7c89a6" text-anchor="middle">${n}</text>`});
+s+=`</svg>`;document.getElementById('root').innerHTML=s;
+</script></body></html>
