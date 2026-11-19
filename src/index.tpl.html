@@ -62,7 +62,7 @@
         <div class="field"><label>Предмет героя (эмодзи)</label><input type="text" id="hAcc" maxlength="4"><div class="chips" id="hAccQ"></div></div>
         <div class="field"><label>Коронная фраза (необязательно)</label><input type="text" id="hCatch" maxlength="60" placeholder="Прорвёмся."></div>
       </div>
-      <div class="field"><label>Тон истории</label><div class="chips" id="hTone"></div></div>
+      <div class="two"><div class="field"><label>Тон истории</label><div class="chips" id="hTone"></div></div><div class="field"><label>Длина</label><div class="chips" id="hLen"></div></div></div>
     </div>
     <div class="card preview"><b>Превью</b><canvas id="pv" width="300" height="360"></canvas><span class="hint" id="pvName"></span></div>
   </div>
@@ -138,6 +138,7 @@
 </main>
 
 <script>/*DATA*/</script>
+<script>/*ENGINE*/</script>
 <script>/*APP*/</script>
 <script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
 </body>

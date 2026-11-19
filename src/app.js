@@ -12,7 +12,7 @@ const EMOJI_FONT='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-s
 /* ---------- состояние ---------- */
 const st={
   genre:null,
-  hero:{name:'Алекс',gender:'m',age:28,prof:'Механик',trait:'Храбрый',out:0,hair:1,skin:1,acc:'🔦',catch:'',tone:'epic'},
+  hero:{name:'Алекс',gender:'m',age:28,prof:'Механик',trait:'Храбрый',out:0,hair:1,skin:1,acc:'🔦',catch:'',tone:'epic',len:6},
   voice:{preset:'narrator',sys:'',pitch:1,rate:1},
   story:null
 };
@@ -89,6 +89,8 @@ function renderHeroForm(){
   chips($('#hTrait'),Object.keys(TRAITS),'trait');
   swatches($('#hOut'),COLORS_OUT,'out');swatches($('#hHair'),COLORS_HAIR,'hair');swatches($('#hSkin'),SKINS,'skin');
   chips($('#hTone'),Object.keys(TONES),'tone',k=>TONES[k].n);
+  $('#hLen').innerHTML=[6,8,10].map(x=>`<span class="chip${+h.len===x?' on':''}" data-v="${x}">${x} сцен</span>`).join('');
+  $('#hLen').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;h.len=+c.dataset.v;saveHero();renderHeroForm()};
   $('#hAccQ').innerHTML=['🔦','🔧','🗡️','📷','🎒','🧭','🪄','📞','🔫','🪓'].map(x=>`<span class="chip" data-v="${x}">${x}</span>`).join('');
   $('#hAccQ').onclick=e=>{const c=e.target.closest('.chip');if(c){h.acc=c.dataset.v;saveHero();renderHeroForm()}};
   drawPreview();
@@ -164,28 +166,12 @@ function speak(text,cb){
 }
 
 /* ---------- агент: сценарий ---------- */
-const SHOTS=['wide establishing shot','medium shot','tracking shot following the hero','close-up on the face','dynamic action shot','slow pull-back wide shot'];
-const BEATS=['calm before the storm','sudden danger appears','determined journey begins','tense confrontation with the obstacle','shocking twist and climactic moment','hopeful ending, new dawn'];
+const BEATS_UNUSED=['calm before the storm','sudden danger appears','determined journey begins','tense confrontation with the obstacle','shocking twist and climactic moment','hopeful ending, new dawn'];
 function heroEn(){const h=st.hero;return `a ${TRAITS[h.trait].en} ${h.gender==='f'?'woman':'man'}, ${h.age} years old, ${h.prof}, wearing ${COLORS_OUT[h.out].en} clothes, ${COLORS_HAIR[h.hair].en} hair, holding ${h.acc}`}
-function localStory(gn){
-  const h=st.hero,n=h.name,tr=TRAITS[h.trait][h.gender],tone=h.tone;
-  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
-  const ends={
-   epic:`С рассветом ${n} ${g('дошёл','дошла')} до конца пути. Мир уже не станет прежним, но у него появился герой.`,
-   dark:`${n} ${g('выжил','выжила')}, но цена оказалась страшной. Некоторые двери лучше не открывать.`,
-   ironic:`${n} ${g('справился','справилась')}, хотя, честно говоря, по плану всё должно было пойти совсем иначе.`,
-   warm:`${n} ${g('вернулся','вернулась')} к тем, кто ждал. И впервые за долгое время стало по-настоящему тихо и тепло.`};
-  const catchLine=h.catch?` «${h.catch}» — ${g('сказал','сказала')} ${n}.`:'';
-  const t=[
-   `${gn.place}. Знакомьтесь: ${n}, ${h.age}, ${h.prof.toLowerCase()}. Характер: ${tr}. ${pick(['Обычный день — пока не случилось это.','Всё шло как всегда. Ненадолго.'])}`,
-   `${cap(gn.hook)}. ${n} ${g('замер','замерла')}: прежней жизни больше нет.`,
-   `Цель ясна: ${gn.goal}. ${n} ${g('собрал','собрала')} всё нужное и ${g('вышел','вышла')} в путь, сжимая ${h.acc}.`,
-   `${cap(gn.obs)}. ${n} ${g('понял','поняла')}: назад дороги нет.`,
-   `${cap(gn.twist)}. И тогда ${n} ${g('принял','приняла')} решение, от которого зависело всё.`,
-   ends[tone]+catchLine];
-  const lv=[0,.3,.1,.8,1,0];
-  return {title:gn.n+': '+n,scenes:t.map((text,i)=>({text,props:gn.props.slice(),threat:lv[i]>0?gn.threat:'',level:lv[i],flash:!!gn.flash&&(i===1||i===4)||tone==='dark'&&i===4,
-    anim:`${SHOTS[i]}, ${heroEn()}, ${gn.en}, ${BEATS[i]}${lv[i]>0?', threat: '+gn.enT:''}, ${TONES[tone].en}, smooth camera motion, 5 seconds, 16:9`}))};
+function localStory(gn,seed){
+  const h=st.hero;
+  const hero=Object.assign({},h,{traitAdj:TRAITS[h.trait].m,heroEn:heroEn(),prof:h.prof||'путник'});
+  return Engine.generate(gn,hero,h.tone,{scenes:+h.len||6,seed:seed});
 }
 async function aiStory(gn,key){
   const h=st.hero;
@@ -207,10 +193,10 @@ async function runAgent(){
   $('#log').innerHTML='';
   const gn=st.genre,key=($('#apiKey').value||lsGet('si_key')||'').trim();
   let d=log('Агент: читаю идею и параметры героя…');await sleep(250);d.className='ok';
-  d=log('Агент: пишу сценарий '+(key?'через Claude API…':'встроенным генератором…'));
+  d=log('Агент: пишу сценарий '+(key?'через Claude API…':'собственным движком (без шаблонов)…'));
   let story=null;
   if(key){try{story=await aiStory(gn,key);d.className='ok'}catch(e){d.className='err';d.textContent='Claude API не ответил ('+e.message+') — использую встроенный генератор';}}
-  if(!story){await sleep(250);story=localStory(gn);if(!key)d.className='ok'}
+  if(!story){await sleep(250);const seed=(Math.random()*2**31)|0;story=localStory(gn,seed);if(!key){d.className='ok';d.textContent='Агент: собственный движок написал сценарий (мир «'+(story.world||gn.id)+'», seed '+seed+')'}}
   d=log('Агент: подбираю голос «'+VOICES[st.voice.preset].n+'»…');await sleep(200);d.className='ok';
   d=log('Агент: пишу промты анимации для '+story.scenes.length+' сцен…');await sleep(200);d.className='ok';
   d=log('Агент: рисую видео кодом (HTML5 canvas) и синхронизирую субтитры с голосом…');await sleep(300);d.className='ok';
@@ -320,9 +306,11 @@ function drawWorld(x,sc,gn,i,p,t,speaking,W,H,S,hh){
   const heroX=W*([.2,.28,.36,.45,.52,.64][Math.min(i,5)]+.08*p);
   const L=sc.level*(.4+.6*Math.min(1,p*1.4));
   const nT=sc.threat?1+Math.round(sc.level*3):0;
-  const walking=!speaking||sc.level>.7;
+  const act=sc.act||(sc.level>.7?'run':'walk');
+  const walking=act==='walk'||act==='run'||act==='pick';
   const drawT=()=>{for(let k=0;k<nT;k++){const fs=(120-k*16)*S,tx=W*(1.12-L*.38)+k*(W>H?95:55)*S-Math.sin(t*2+k)*6*S,ty=feet-(k%2)*18*S+Math.sin(t*5+k*2)*5*S;x.font=Math.round(fs)+'px '+EMOJI_FONT;x.textAlign='center';x.fillText(sc.threat,tx,ty-8*S)}};
-  drawHero(x,heroX,feet,S*1.0*(W>H?1.15:1),walking?t*6:0,speaking,hh,t);
+  const hs=S*(W>H?1.15:1)*(act==='hide'?.78:1),wph=act==='run'?t*12:act==='fight'?t*15:act==='hurt'?Math.sin(t*20)*1.2:walking?t*6:0;
+  drawHero(x,heroX+(act==='fight'?Math.sin(t*6)*18*S:0),feet+(act==='hide'?10*S:0),hs,wph,speaking,hh,t);
   drawT();
   if(gn.sk==='city'||gn.sk==='interior'){}
   drawParts(x,sc,gn,t,W,H,S);
