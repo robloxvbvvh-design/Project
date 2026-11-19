@@ -3,7 +3,7 @@ on:
   workflow_dispatch: {}
   push:
     branches: [main, 'ccr-*']
-    paths: ['www/**', '.github/workflows/apk.yml']
+    paths: ['www/**', 'android/**', '.github/workflows/apk.yml']
 permissions:
   contents: write
 jobs:
@@ -11,24 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: {node-version: 20}
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: 17}
-      - name: Capacitor Android project
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: 8.9}
+      - name: Build tiny APK (WebView + одна страница)
         run: |
-          npm init -y >/dev/null
-          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
-          npx cap init "Студия Историй" com.studio.istorii --web-dir=www
-          npx cap add android
-          npx cap sync android
-      - name: Build debug APK
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+          cp www/index.html android/app/src/main/assets/index.html
+          cd android && gradle assembleRelease --no-daemon
       - name: Publish release (direct download link)
         env: {GH_TOKEN: '${{ secrets.GITHUB_TOKEN }}'}
         run: |
-          cp android/app/build/outputs/apk/debug/app-debug.apk studio-istorii.apk
+          cp android/app/build/outputs/apk/release/app-release.apk studio-istorii.apk
+          ls -l studio-istorii.apk
           gh release delete apk-latest --cleanup-tag -y || true
-          gh release create apk-latest studio-istorii.apk --target "$GITHUB_SHA" --title "Студия Историй (APK)" --notes "Скачай studio-istorii.apk на телефон и установи (разреши установку из этого источника)."
+          gh release create apk-latest studio-istorii.apk --target "$GITHUB_SHA" --title "Студия Историй (APK)" --notes "Лёгкий APK. Скачай studio-istorii.apk и установи."
       - uses: actions/upload-artifact@v4
         with: {name: studio-istorii-apk, path: studio-istorii.apk}
