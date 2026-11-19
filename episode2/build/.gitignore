@@ -1,0 +1,5 @@
+chunk_*.mp4
+still_*.png
+s[0-9].png
+render.log
+list.txt
