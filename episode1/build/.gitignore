@@ -7,3 +7,10 @@ frames/
 last.png
 mid.png
 list.txt
+stem_*.wav
+premix.wav
+final_audio.wav
+fa_*.wav
+f_*.png
+final_check.png
+rigtest.png

@@ -28,6 +28,11 @@ function CH(n, x, y, s, o = {}) {
   if (n === 'denis' && o.light != null) str = str.replace('opacity=".18"', `opacity="${(.18 * o.light).toFixed(3)}"`).replace('opacity=".7"', `opacity="${(.7 * o.light).toFixed(3)}"`);
   return `<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${o.rot || 0}) scale(${fl * s} ${(s * br).toFixed(4)}) translate(${-CX[n]} -403)" ${o.op != null ? `opacity="${o.op}"` : ''}>${str}${o.extra || ''}</g>`;
 }
+function reachPose(kind, x, y, s, o, side, T, e, bend) {
+  const base = { ...o }; delete base.armR; delete base.armL;
+  const rest = handW(kind, x, y, s, base, side);
+  return { to: [lerp(rest[0], T[0], e), lerp(rest[1], T[1], e)], bend: bend || 1 };
+}
 const pct = t => t < 9.2 ? 31 : t < 61.7 ? lerp(31, 10, (t - 9.2) / 52.5) : lerp(10, 6, seg(t, 61.7, 88.8));
 const P3 = t => Math.round(pct(t));
 const txt = (s, x, y, size, fill, o = {}) => `<text x="${x}" y="${y}" font-size="${size}" font-weight="bold" fill="${fill}" text-anchor="${o.anchor || 'middle'}" ${o.op != null ? `opacity="${o.op.toFixed(3)}"` : ''} ${o.tr ? `transform="${o.tr}"` : ''}>${s}</text>`;
@@ -59,7 +64,7 @@ add(3.55, 9.2, (t, u) => {
   let amb = off ? 0 : 1; if (t > 4.9 && t < 5.6) amb = Math.sin(t * 60) > 0 ? 1 : .3;
   const pun = [7.92, 8.42, 8.9].reduce((s, b) => s + (t > b ? Math.exp(-(t - b) * 8) * .05 : 0), 0);
   return {
-    g: BG.flat + mihaBed(t) + CH('denis', 70, 402, .62, { breath: t * 2 }) +
+    g: BG.flat + mihaBed(t) + RG('denis', 70, 402, .62, { breath: t * 2, headRot: 6 * Math.sin(t * .9) }) +
       `<ellipse cx="135" cy="90" rx="150" ry="170" fill="url(#warm)" opacity="${(.28 * amb).toFixed(3)}"/>` +
       D(off ? .5 + .04 * Math.sin(t * 3) : .18) + R(t, 40, 5, .3, 340, .22, true),
     cam: { z: 1.05 + .3 * E(t, 3.55, 9.2) + pun, cx: lerp(135, 120, u), cy: lerp(240, 190, u) }
@@ -67,9 +72,10 @@ add(3.55, 9.2, (t, u) => {
 });
 // 2. Девятый этаж, Миха, заряд
 add(9.2, 17.35, (t, u) => {
+  const o2 = { breath: t * 2.2, headRot: 5 * Math.sin(t * .8) }; o2.armR = reachPose('denis', 150, 402, .62, o2, 'R', [221, 338], E(t, 12.6, 13.2) * (1 - E(t, 15.0, 15.6)));
   const a3 = E(t, 14.4, 14.8) * (1 - E(t, 16.4, 16.8)), a5 = E(t, 16.0, 16.4);
   return {
-    g: BG.flat + mihaBed(t) + CH('denis', 118, 402, .62, { breath: t * 2.2 }) + D(.5) + R(t, 40, 6, .3, 340, .22, true) +
+    g: BG.flat + mihaBed(t) + RG('denis', 150, 402, .62, o2) + D(.5) + R(t, 40, 6, .3, 340, .22, true) +
       `<g opacity="${a3.toFixed(3)}">${txt('3 ч', 221, 318 - 10 * E(t, 14.4, 15), 26, P.amber)}</g>` +
       `<g opacity="${a5.toFixed(3)}">${txt('5 ч', 221, 318 - 10 * E(t, 16.0, 16.6), 28, '#ff5a4a')}</g>` +
       `<circle cx="221" cy="347" r="${(26 + 3 * Math.sin(t * 6)).toFixed(1)}" fill="${P.green}" opacity=".08"/>`,
@@ -80,14 +86,9 @@ add(9.2, 17.35, (t, u) => {
 add(17.35, 20.3, (t, u) => {
   const dig = t < 17.92 ? '' : t < 18.1 ? '1' : t < 18.3 ? '10' : '103';
   const no = t > 19.0;
+  const o3 = { breath: t * 2, headRot: -4 * Math.sin(t * 1.2) }; o3.armR = reachPose('denis', 135, 470, 1.1, o3, 'R', [186, 178], E(t, 17.4, 17.95)); o3.holdR = { svg: P_phone(dig, no) };
   return {
-    g: BG.flat + D(.62) + CH('denis', 135, 470, 1.1, { breath: t * 2 }) +
-      `<path d="M199 175 L192 150" stroke="#2d4a52" stroke-width="13" stroke-linecap="round"/>
-       <g transform="translate(0 ${(-1.5 * Math.sin(t * 4)).toFixed(2)})"><rect x="176" y="112" width="36" height="64" rx="6" fill="#0b0f18" stroke="#2b3550" stroke-width="2"/>
-       <rect x="180" y="118" width="28" height="50" rx="3" fill="${no ? '#2a1717' : '#15334a'}"/>
-       ${txt(dig, 194, 140, 11, '#cfe8ff')}
-       ${no ? `<g opacity="${E(t, 19, 19.25).toFixed(3)}">${txt('нет сети', 194, 150, 6.5, '#ff6a5a')}<path d="M185 162 v-4 M190 162 v-8 M195 162 v-12 M200 162 v-16" stroke="#6a2a2a" stroke-width="3"/><path d="M183 138 l22 26" stroke="#ff4a3a" stroke-width="2.2"/></g>` : ''}
-       <circle cx="192" cy="150" r="7" fill="${P.skin}"/></g>` + R(t, 26, 8, .3, 340, .22, true),
+    g: BG.flat + D(.62) + RG('denis', 135, 470, 1.1, o3) + R(t, 26, 8, .3, 340, .22, true),
     cam: { z: 1.0 + .08 * u, cx: 150, cy: 240 }
   };
 });
@@ -106,7 +107,7 @@ add(20.3, 23.0, (t, u) => {
 // 5. Миха шутит
 add(23.0, 28.2, (t, u) => ({
   g: BG.flat + D(.5) + `<rect width="270" height="480" fill="#000" opacity=".25"/>` +
-    CH('miha', 130 + 3 * Math.sin(t * 1.3), 520, 1.28, { breath: t * 2, rot: 1.2 * Math.sin(t * 1.1) }) + R(t, 30, 10, .22, 340, .22, true),
+    RG('miha', 130 + 3 * Math.sin(t * 1.3), 520, 1.28, { breath: t * 2, lean: 1.2 * Math.sin(t * 1.1), headRot: 4 * Math.sin(t * 1.7), armR: { a: [38 + 14 * Math.sin(t * 2.6), 85 + 30 * Math.sin(t * 2.6 + 1)] } }) + R(t, 30, 10, .22, 340, .22, true),
   cam: { z: 1.0 + .06 * u, cx: 135, cy: 235 }
 }));
 // 6. Генератор гудит на седьмом
@@ -123,11 +124,14 @@ const doorBg = (t) => `<rect width="270" height="480" fill="#0e1322"/><rect y="4
  <rect x="112" y="96" width="150" height="306" fill="#2a1d12"/><ellipse cx="190" cy="250" rx="110" ry="170" fill="url(#warm)" opacity="${(.55 + .12 * Math.sin(t * 17) * Math.sin(t * 5)).toFixed(3)}"/>
  <rect x="112" y="96" width="150" height="306" fill="none" stroke="#2a3350" stroke-width="9"/><rect x="20" y="120" width="60" height="150" fill="#101626"/>`;
 add(31.9, 36.8, (t, u) => {
-  const give = E(t, 34.6, 35.6), gone = E(t, 35.9, 36.4);
-  const bx = lerp(lerp(120, 150, give), 205, gone), by = lerp(lerp(292, 288, give), 330, gone);
+  const M = [150, 262], e = E(t, 34.3, 34.85) * (1 - E(t, 35.1, 35.7));
+  const dO = { flip: true, breath: t * 2.1, headRot: 4 * Math.sin(t * 1.3) }, pO = { breath: t * 2, headRot: 5 * Math.sin(t * 2.3) };
+  dO.armL = reachPose('denis', 62, 400, .78, dO, 'L', M, e);
+  pO.armL = reachPose('petrovich', 192, 400, .78, pO, 'L', M, e);
+  pO.armR = { a: [14, 8] }; pO.holdR = { svg: P_lantern };
+  if (t < 34.92) dO.holdL = { svg: P_bag }; else pO.holdL = { svg: P_bag };
   return {
-    g: doorBg(t) + CH('petrovich', 192, 400, .78, { breath: t * 2, rot: 1.8 * Math.sin(t * 2.3) }) + CH('denis', 62, 400, .78, { flip: true, breath: t * 2.1 }) +
-      `<g opacity="${(1 - gone).toFixed(3)}"><rect x="${bx - 12}" y="${by - 4}" width="24" height="18" rx="3" fill="#6b4a2c"/><path d="M${bx - 8} ${by - 4} q8 -10 16 0" stroke="#3a2a18" stroke-width="2.4" fill="none"/></g>` + R(t, 6, 12, .1),
+    g: doorBg(t) + RG('petrovich', 192, 400, .78, pO) + RG('denis', 62, 400, .78, dO) + R(t, 6, 12, .1),
     cam: { z: 1.0 + .22 * u, cx: lerp(135, 150, u), cy: 250 }
   };
 });
@@ -160,13 +164,14 @@ add(39.0, 42.5, (t, u) => {
 // 9. Лестница вниз, фонарик слабеет
 add(42.5, 47.0, (t, u) => {
   const n = 9 - Math.floor(seg(t, 42.5, 46.9) * 8);
-  const L = t < 45.6 ? 1 : clamp(.55 + .55 * Math.sin(t * 41) * Math.sin(t * 23), .05, 1);
-  const x = lerp(48, 200, E(t, 42.5, 47.0)), y = lerp(305, 400, E(t, 42.5, 47.0)) - 2.5 * Math.abs(Math.sin(t * 9));
-  const hx = x + 22, hy = y - 34;
+  const L0 = t < 45.6 ? 1 : clamp(.55 + .55 * Math.sin(t * 41) * Math.sin(t * 23), .05, 1);
+  const L = t < 43.6 ? 0 : L0;
+  const x = lerp(48, 200, E(t, 42.5, 47.0)), y = lerp(305, 400, E(t, 42.5, 47.0));
+  const up = E(t, 43.3, 43.9);
+  const o = { breath: t * 2, drop: 2.5 * Math.abs(Math.sin(t * 9.5)), walk: { ph: t * 9.5, amp: .9 }, lean: 2 * Math.sin(t * 9.5), armR: { a: [lerp(15, 72, up), lerp(-30, 98, up)] } };
+  if (t >= 43.0) o.holdR = { svg: P_flash(L, 300) };
   return {
-    g: BG.stairs.replace('>7<', `>${n}<`) + D(.56 + (1 - L) * .22) +
-      `<polygon points="${hx},${hy} ${hx + 110},${hy - 16} ${hx + 120},${hy + 60}" fill="${P.amber}" opacity="${(.2 * L).toFixed(3)}"/>` +
-      CH('denis', x, y, .5, { light: L, rot: 2 * Math.sin(t * 9) }) + R(t, 14, 14, .12, 300, .22),
+    g: BG.stairs.replace('>7<', `>${n}<`) + D(.56 + (1 - L) * .22) + RG('denis', x, y, .5, o) + R(t, 14, 14, .12, 300, .22),
     cam: { z: 1.2, cx: x + 20, cy: y - 80 }
   };
 });
@@ -174,10 +179,10 @@ add(42.5, 47.0, (t, u) => {
 add(47.0, 52.25, (t, u) => {
   const L = t < 47.9 ? 1 : t < 48.24 ? (Math.sin(t * 70) > 0 ? 1 : .1) : 0;
   const fill = E(t, 49.5, 51.7);
+  const lower = E(t, 48.3, 48.9), den10 = { breath: t * 2, lean: t > 48.24 ? 3 * Math.sin(t * 3.1) : 0, armR: { a: [lerp(92, 20, lower), lerp(100, 12, lower)] }, holdR: { svg: P_flash(L, 260) } };
   const dripT = (t * 2.5) % 1;
   return {
-    g: BG.lot + `<g opacity="${(L * .35).toFixed(3)}"><polygon points="125,372 108,298 148,296" fill="${P.amber}" opacity=".5"/></g>` +
-      CH('denis', 80, 425, .7, { light: L, breath: t * 2, rot: t > 48.24 ? 3 * Math.sin(t * 3.1) : 0 }) +
+    g: BG.lot + RG('denis', 60, 470, .7, den10) +
       `<path d="M127 296 q4 40 26 70" stroke="#2a3040" stroke-width="2.4" fill="none"/><rect x="142" y="392" width="22" height="30" rx="3" fill="#7a2b24"/><rect x="146" y="${(420 - 24 * fill).toFixed(1)}" width="14" height="${(24 * fill).toFixed(1)}" fill="${P.amber}" opacity=".55"/>
        ${t > 49.3 ? `<circle cx="153" cy="${(366 + dripT * 24).toFixed(1)}" r="1.8" fill="${P.amber}" opacity=".8"/>` : ''}` +
       D(.28 + .58 * (1 - L)) + R(t, 46, 15, .28, 360, .22),
@@ -186,19 +191,22 @@ add(47.0, 52.25, (t, u) => {
 });
 // 11. Трасса — отняли канистру
 add(52.25, 58.5, (t, u) => {
-  const walk = E(t, 52.3, 54.8), sx = lerp(55, 95, walk), sy = lerp(400, 445, walk), ss = lerp(.55, .78, walk);
-  const bob = 2 * Math.abs(Math.sin(t * 6));
-  const th = E(t, 54.8, 56.7) * (1 - E(t, 57.8, 58.5));
-  const ths = lerp(.18, .62, E(t, 54.8, 56.7)) * lerp(1, .35, E(t, 57.8, 58.5));
-  const thy = lerp(215, 420, E(t, 54.8, 56.7)) - 140 * E(t, 57.8, 58.5);
-  const take = E(t, 57.0, 57.55);
-  const cx0 = sx + (56 - 130) * ss, cy0 = sy - bob - (403 - 264) * ss;
-  const cxp = lerp(cx0, 128, take), cyp = lerp(cy0, thy - 30, take);
+  const wk = E(t, 52.3, 54.8), sx = lerp(55, 95, wk), sy = lerp(400, 445, wk), ss = lerp(.55, .78, wk);
+  const ph = t * 7.5;
+  const thIn = E(t, 54.8, 56.7), thOut = E(t, 57.8, 58.5);
+  const th = thIn * (1 - thOut);
+  const ths = lerp(.18, .62, thIn) * lerp(1, .35, thOut);
+  const thy = lerp(215, 420, thIn) - 140 * thOut;
+  const taken = t >= 57.2;
+  const dO = { walk: { ph, amp: t < 54.8 ? 1 : .3 }, drop: 3 * Math.abs(Math.sin(ph)), breath: t * 3, lean: 1.5 * Math.sin(ph), armR: { a: [10, 6] }, holdL: { svg: P_flash(0, 10) } };
+  if (!taken) dO.holdR = { svg: P_can };
+  const dHand = handW('denis', sx, sy, ss, dO, 'R');
+  const tA = { walk: { ph: t * 6, amp: thOut > 0 ? 1 : .2 }, breath: t * 2 };
+  tA.armL = reachPose('thug', 185, thy, ths, tA, 'L', dHand, E(t, 56.7, 57.15) * (1 - E(t, 57.3, 57.8)));
+  if (taken) tA.holdL = { svg: P_can };
   return {
-    g: BG.road + D(.22) + `<g opacity="${(th).toFixed(3)}">${CH('thugs', 150, thy, ths, {})}</g>` +
-      CH('denis', sx, sy - bob, ss, { light: 0, breath: t * 3, rot: 1.5 * Math.sin(t * 6) }) +
-      `<g transform="translate(${cxp.toFixed(1)} ${cyp.toFixed(1)}) scale(${(ss * (1 - .35 * take)).toFixed(3)})"><rect x="-10" y="-8" width="22" height="30" rx="3" fill="#a03228"/><rect x="-4" y="-16" width="10" height="9" rx="2" fill="#a03228"/></g>` +
-      R(t, 56, 16, .32, 380, .22),
+    g: BG.road + D(.22) + `<g opacity="${th.toFixed(3)}">${RG('thug', 130, thy - 6, ths * .92, { walk: { ph: t * 6 + 1, amp: thOut > 0 ? 1 : .2 }, c: '#0e121b' })}${RG('thug', 185, thy, ths, tA)}</g>` +
+      RG('denis', sx, sy, ss, dO) + R(t, 56, 16, .32, 380, .22),
     cam: { z: 1.02, cx: 135, cy: 260 + 5 * u, sh: .4 }
   };
 });
@@ -210,7 +218,7 @@ add(58.5, 61.7, (t, u) => {
     g: BG.road + D(.28) + `<circle cx="135" cy="95" r="52" fill="none" stroke="#1a2234" stroke-width="9"/>
       <circle cx="135" cy="95" r="52" fill="none" stroke="${t > 60.9 ? '#ff5a4a' : P.amber}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * prog).toFixed(1)}" transform="rotate(-90 135 95)"/>
       ${txt(t < 60.4 ? '60 мин' : '1 час', 135, 104, 24, '#f2f4f8')}` +
-      CH('denis', 135, 450 - bob, .85, { light: 0, rot: 2.5 * Math.sin(t * 8) }) + R(t, 50, 17, .3, 400, .22),
+      RG('denis', 135, 450, .85, { walk: { ph: t * 10, amp: 1.3 }, drop: 5 * Math.abs(Math.sin(t * 10)), lean: 3 * Math.sin(t * 10), armL: { a: [20 + 28 * Math.sin(t * 10), 50] }, armR: { a: [20 - 28 * Math.sin(t * 10), 50] }, holdR: { svg: P_flash(0, 10) } }) + R(t, 50, 17, .3, 400, .22),
     cam: { z: 1.04 + .04 * u, cx: 135, cy: 200, sh: .6 }
   };
 });
@@ -236,7 +244,7 @@ add(64.9, 66.95, (t, u) => {
   const y = lerp(380, 330, u);
   return {
     g: BG.road + D(.34) + `<circle cx="135" cy="190" r="${r.toFixed(1)}" fill="url(#halo)" opacity="${a.toFixed(3)}"/>` +
-      CH('denis', 135, y, lerp(.5, .38, u), { light: 0, breath: t * 3 }) + R(t, 50, 18, .3, 380, .22),
+      RG('denis', 135, y, lerp(.5, .38, u), { walk: { ph: t * 7, amp: 1 }, drop: 2 * Math.abs(Math.sin(t * 7)), breath: t * 3, holdR: { svg: P_flash(0, 10) } }) + R(t, 50, 18, .3, 380, .22),
     cam: { z: lerp(1.0, 1.35, E(t, 64.9, 66.9)), cx: 135, cy: lerp(260, 220, u), sh: .3 }
   };
 });
@@ -259,7 +267,7 @@ add(70.95, 78.05, (t, u) => {
   const redled = t > 77.08 ? (Math.sin(t * 14) > 0 ? 1 : .2) : 0;
   return {
     g: BG.corridor + `<rect width="270" height="480" fill="${P.red}" opacity="${(.06 + .08 * pulse).toFixed(3)}"/>` +
-      CH('denis', 72, 462, .78, { light: 0, breath: t * 2, rot: 1.2 * Math.sin(t * 1.4) }) + CH('doctor', 198, 462, .78, { breath: t * 1.8, rot: 1.5 * Math.sin(t * 2.2 + 1) }) +
+      RG('denis', 72, 462, .78, { breath: t * 2, headRot: 5 * Math.sin(t * 1.1) }) + RG('doctor', 198, 462, .78, { breath: t * 1.8, headRot: -4 * Math.sin(t * 1.9), armL: { a: [18 + 12 * Math.sin(t * 3), 55 + 20 * Math.sin(t * 3 + 1)] } }) +
       `<circle cx="155" cy="245" r="${(10 + 10 * outl).toFixed(1)}" fill="url(#halo)" opacity="${(outl * .8).toFixed(2)}"/>` +
       `<circle cx="155" cy="245" r="2.6" fill="#ff3a2a" opacity="${redled}"/><circle cx="155" cy="245" r="18" fill="url(#redh)" opacity="${(redled * .8).toFixed(2)}"/>`,
     cam: { z: lerp(1.0, 1.14, E(t, 70.95, 78.0)), cx: 135, cy: 300 }
@@ -277,21 +285,30 @@ function ecg(t, alive) {
   return `<path d="${d}" stroke="${P.green}" stroke-width="2.4" fill="none"/>`;
 }
 add(78.05, 83.45, (t, u) => {
-  const walk = E(t, 78.2, 80.3), dx = lerp(330, 222, walk), dy = 436 - 3 * Math.abs(Math.sin(t * 7)) * (walk < 1 ? 1 : 0);
-  const pull = E(t, 80.5, 81.2), alive = t < 80.6, off = t > 82.4;
-  const plugx = lerp(248, 196, pull), plugy = lerp(352, 424 + 20 * E(t, 81.0, 81.5), pull);
+  const walk = E(t, 78.2, 80.3), dx = lerp(330, 214, walk), dy = 436;
+  const bend = E(t, 79.8, 80.4) * (1 - E(t, 80.6, 81.3));
+  const dO = { walk: walk < 1 ? { ph: t * 8, amp: 1 } : null, drop: walk < 1 ? 3 * Math.abs(Math.sin(t * 8)) : 0, breath: t * 1.8, lean: 10 * bend };
+  const SOCK = [248, 325], pullE = E(t, 80.56, 81.2);
+  const tgt = [lerp(SOCK[0], 212, pullE), lerp(SOCK[1], 405, pullE)];
+  dO.armR = reachPose('doctor', dx, dy, .8, dO, 'R', tgt, E(t, 79.8, 80.4) * (1 - E(t, 81.2, 81.9)));
+  const held = t >= 80.56;
+  if (held) dO.holdR = { svg: P_plug };
+  const plugW = held ? handW('doctor', dx, dy, .8, dO, 'R') : SOCK;
+  const alive = t < 80.6, off = t > 82.4;
   const ledOn = alive ? 1 : (Math.sin(t * 10) > 0 && t < 82.4 ? 1 : .2);
   const extra = `<rect x="188" y="250" width="48" height="24" rx="3" fill="#07120e"/>${off ? '' : ecg(t, alive)}` +
     `<rect x="192" y="284" width="10" height="10" fill="#1a2234"/><circle cx="196" cy="290" r="4" fill="${off ? '#2a1717' : P.red}" opacity="${off ? 1 : ledOn}"/>`;
+  const px = 105 + (212 - 130) * .8, py = 430 - (403 - 276) * .8;
+  const sag = 446 + 6 * (1 - pullE);
   return {
     g: BG.corridor + D(.18) + `<rect width="270" height="480" fill="${P.red}" opacity="${(.06 + .06 * Math.sin(t * 4.5)).toFixed(3)}"/>` +
-      `<rect x="240" y="338" width="16" height="22" rx="2" fill="#2a3350"/>` +
-      CH('denis', 38, 462, .46, { light: 0, op: .85 }) +
+      `<rect x="240" y="314" width="16" height="22" rx="2" fill="#2a3350"/>` +
+      RG('denis', 38, 462, .46, { op: .85, breath: t * 2 }) +
       CH('oldman', 105, 430, .8, { extra }) +
-      `<path d="M${(105 + (212 - 130) * .8).toFixed(1)} ${(430 - (403 - 276) * .8).toFixed(1)} Q 200 ${(446 + 6 * (1 - pull)).toFixed(1)} ${plugx.toFixed(1)} ${plugy.toFixed(1)}" stroke="#0a0c14" stroke-width="2.2" fill="none"/>` +
-      `<rect x="${(plugx - 4).toFixed(1)}" y="${(plugy - 5).toFixed(1)}" width="8" height="10" rx="1.5" fill="#cfd6dc"/>` +
-      CH('doctor', dx, dy, .8, { breath: t * 1.8 }),
-    cam: { z: lerp(1.0, 1.3, E(t, 78.05, 83.4)), cx: lerp(135, 160, u), cy: lerp(300, 340, u) }
+      `<path d="M${px.toFixed(1)} ${py.toFixed(1)} Q 200 ${sag.toFixed(1)} ${plugW[0].toFixed(1)} ${plugW[1].toFixed(1)}" stroke="#0a0c14" stroke-width="2.2" fill="none"/>` +
+      (held ? '' : `<rect x="${SOCK[0] - 4}" y="${SOCK[1] - 5}" width="8" height="10" rx="1.5" fill="#cfd6dc"/>`) +
+      RG('doctor', dx, dy, .8, dO),
+    cam: { z: lerp(1.0, 1.2, E(t, 78.05, 83.4)), cx: lerp(135, 150, u), cy: lerp(300, 335, u) }
   };
 });
 // 17. Врач смотрит
@@ -299,7 +316,7 @@ add(83.45, 90, (t, u) => {
   const pulse = .5 + .5 * Math.sin(t * 4.5);
   return {
     g: BG.corridor + D(.35) + `<rect width="270" height="480" fill="${P.red}" opacity="${(.08 + .1 * pulse).toFixed(3)}"/>` +
-      CH('doctor', 135, 655, 1.5, { breath: t * 1.6 }),
+      RG('doctor', 135, 655, 1.5, { breath: t * 1.6, headRot: lerp(-16, 0, E(t, 83.5, 85.3)) }),
     cam: { z: lerp(1.0, 2.05, E(t, 83.45, 88.5)), cx: 135, cy: lerp(300, 175, E(t, 83.45, 88.5)) }
   };
 });

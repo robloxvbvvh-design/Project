@@ -1,0 +1,20 @@
+<!doctype html><html><body style="margin:0;background:#0b0f1b"><svg id="s" width="1500" height="560" viewBox="0 0 750 280" font-family="DejaVu Sans"></svg>
+<script src="assets.js"></script><script src="rig.js"></script>
+<script>
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const txt=(s,x,y,size,fill)=>`<text x="${x}" y="${y}" font-size="${size}" font-weight="bold" fill="${fill}" text-anchor="middle">${s}</text>`;
+let h='';
+// 1 Denis flashlight raised sideways
+h+=RG('denis',70,260,.6,{armR:{a:[80,95]},holdR:{svg:P_flash(1,200)}});
+// 2 Denis reaching to point (IK), holding bag on left
+h+=RG('denis',190,260,.6,{armR:{to:[250,170]},armL:{a:[10,0]},holdL:{svg:P_bag}});
+// 3 Petrovich lantern + walking legs
+h+=RG('petrovich',320,260,.6,{armR:{a:[12,6]},holdR:{svg:P_lantern},walk:{ph:1.0,amp:1},drop:3});
+// 4 Doctor reach to socket with plug, flipped
+h+=RG('doctor',450,260,.6,{armR:{to:[500,150]},holdR:{svg:P_plug}});
+// 5 Miha with phone
+h+=RG('miha',560,260,.6,{armR:{to:[585,150]},holdR:{svg:P_phone('103',false)}});
+// 6 thug holding canister
+h+=RG('thug',680,260,.6,{armL:{a:[8,0]},holdL:{svg:P_can}});
+document.getElementById('s').innerHTML=h;
+</script></body></html>
